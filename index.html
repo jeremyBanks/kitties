@@ -25,7 +25,7 @@
         color: inherit;
     }
 
-    a.inline-kitty {
+    .Kitty {
         display: inline-block;
         padding: .166em;
         border-radius: .166em;
@@ -35,11 +35,11 @@
         height: 2.666em;
     }
 
-        a.inline-kitty:hover {
+        .Kitty:hover {
             background: #FEE;
         }
 
-        a.inline-kitty img {
+        .Kitty img {
             vertical-align: -2em;
             height: 3.833em;
             position: relative;
@@ -96,13 +96,15 @@ export const el = (tagNamesString, ...childrenAndAttributes) => {
     addToElement(inner, childrenAndAttributes);
 
     return outer;
-}
+};
 
 el.setChildren = (parent, ...children) => {
     const newContents = el('', ...children);
     parent.textContent = '';
     parent.appendChild(newContents);
-}
+};
+
+el.TO_EL = Symbol('el.TO_EL');
 
 const addToElement = (element, additions, before) => {
     if (before) element = before.parentElement; // hacky fix for documentfragment parents and promises
@@ -114,6 +116,12 @@ const addToElement = (element, additions, before) => {
             element.insertBefore(childOrAttributes, before);
         } else if (
             typeof childOrAttributes == 'object' &&
+            typeof childOrAttributes[el.TO_EL] == 'function'
+        ) {
+            const additions = el('', childOrAttributes[el.TO_EL]());
+            addToElement(element, [additions], before);
+        } else if (
+            typeof childOrAttributes == 'object' &&
             typeof childOrAttributes.then == 'function'
         ) {
             const placeholder = document.createComment(' Promise pending. ');
@@ -123,6 +131,7 @@ const addToElement = (element, additions, before) => {
                 addToElement(element, [additions], placeholder)
             }, error => {
                 placeholder.textContent = ` Promise rejected: ${error && error.stack || error} `;
+                console.error(error);
             });
         } else if (typeof childOrAttributes == 'object') {
             if (!(element instanceof Element)) {
@@ -135,13 +144,26 @@ const addToElement = (element, additions, before) => {
             element.insertBefore(document.createTextNode(String(childOrAttributes)), before);
         }
     }
+};
+
+export class Throttle {
+    constructor(minInterval = 1000) {
+        this.minInterval = minInterval;
+        this.next = Promise.resolve();
+    }
+
+    async tick() {
+        const current = this.next;
+        this.next = current.then(_ => new Promise(r => setTimeout(r, this.minInterval)));
+        return current;
+    }
 }
 </script>
 
 
 <!-- kitty logic -->
 <script type="inline-module" id="kittycodez">
-import {el} from '#utils';
+import {el, Throttle} from '#utils';
 
 const form = document.querySelector('form#family');
 const kittyIdEl = form.querySelector('[name=kitty-id]');
@@ -161,36 +183,22 @@ const showTree = async (ancestorKittyId) => {
     const rootAncestor = Kitty.fetch(ancestorKittyId);
 
     el.setChildren(output,
-        rootAncestor.then(rootAncestor => el('h2', "Family of ", inlineKitty(rootAncestor))),
+        rootAncestor.then(rootAncestor => el('h2', "Family of ", rootAncestor)),
         rootAncestor.then(rootAncestor => el('div', makeTree(rootAncestor))),
     );
 };
 
 const makeTree = async (kitty) => {
-    console.log(kitty);
-    // TODO: display all children, by spouse?
-    // maybe count different spouses as different families..?
-
-    return el('p', "I'm a tree!");
+    return el('div',
+        el('p', kitty),
+        el('ul', kitty.fetchChildren().then(children => children.map(child => el('li', makeTree(child))))));
 };
 
-const inlineKitty = async (kitty) => el(
-    'a',
-    {
-        class: 'inline-kitty',
-        href: `https://www.cryptokitties.co/kitty/${kitty.id}`
-    },
-    el(
-        'img',
-        {
-            src: kitty.image_url
-        }
-    ),
-    `${kitty.name}`
-);
+const apiThrottle = new Throttle(256);
 
 class Kitty {
     static async fetch(kittyId) {
+        await apiThrottle.tick();
         const response = await fetch(`https://api.cryptokitties.co/kitties/${kittyId}`);
         if (!response.ok) throw new Error("non-ok response from cryptokitties API");
         const data = await response.json();
@@ -198,7 +206,7 @@ class Kitty {
     }
 
     async fetchChildren() {
-        return self.children.map(data => Kitty.fetch(data.id));
+        return Promise.all(this.children.map(data => Kitty.fetch(data.id)));
     }
 
     async fetchParents() {
@@ -210,6 +218,24 @@ class Kitty {
             parents.push(await Kitty.fetch(this.sire.id));
         }
         return parents;
+    }
+
+    async [el.TO_EL]() {
+        console.log(el.TO_EL, this);
+        return el(
+            'a',
+            {
+                class: 'Kitty',
+                href: `https://www.cryptokitties.co/kitty/${this.id}`
+            },
+            el(
+                'img',
+                {
+                    src: this.image_url
+                }
+            ),
+            `${this.name}`
+        );
     }
 }
 </script>
