@@ -2,121 +2,118 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.min.js"></script>
 <script type="module">
-    var kittyId, submit, results, maxGen, treeParentNode, treeNodes = [];
-    var maxGenInput, generations = [];
-    
-    var attachEvents = function() {
-        kittyId = document.getElementById('kittyId');
-        submit = document.getElementById('loadKitty');
-        results = document.getElementById('results');
-        maxGenInput = document.getElementById('kittyGenerationCount');
-        submit.addEventListener('click', loadKittyFromInput);
-    };
+let kittyId;
+let submit;
+let results;
+let maxGen;
+let treeParentNode;
+const treeNodes = [];
+let maxGenInput, generations = [];
 
-    var loadKittyFromInput = function() {
-        var kitty = kittyId.value;
+const attachEvents = () {
+    kittyId = document.getElementById('kittyId');
+    submit = document.getElementById('loadKitty');
+    results = document.getElementById('results');
+    maxGenInput = document.getElementById('kittyGenerationCount');
+    submit.addEventListener('click', loadKittyFromInput);
+};
 
-        result = '';
-        maxGen = parseInt(maxGenInput.value, 10);
-        generations = [];
-        loadKitty(kitty);
-    };
+const loadKittyFromInput = () => {
+    const kitty = kittyId.value;
 
-    var loadKitty = function(kitty, parent) {
-        var request = new XMLHttpRequest();
+    result = '';
+    maxGen = parseInt(maxGenInput.value, 10);
+    generations = [];
+    loadKitty(kitty);
+};
 
-        request.open('GET', 'https://api.cryptokitties.co/kitties/'+kitty, true);
+const loadKitty = async (kitty, parent) => {
+    const response = await fetch(`https://api.cryptokitties.co/kitties/${kitty}`);
+    if (!response.ok) throw new Error("request failed");
+    const json = await response.json();
+    addKitty(json, parent);
+};
 
-        request.onload = function() {
-            if (request.status >= 200 && request.status < 400) {
-                var json = JSON.parse(request.responseText);
-                addKitty(json, parent);
-            }
+const addKitty = (json, parent) => {
+    var myKittyGenerationId;
+
+    if (generations.length === maxGen) {
+        showKitties();
+
+        return;
+    }
+
+    if (undefined === parent) {
+        treeParentNode = {
+            text: {
+                title: json.name,
+                name: 'Generation: '+json.generation+' - ID: '+json.id
+            },
+            link: { href: 'https://www.cryptokitties.co/kitty/'+json.id },
+            image: json.image_url,
+            children: [],
+        };
+        parent = treeParentNode;
+    }
+
+    myKittyGenerationId += json.id;
+
+    if (undefined != json.matron && undefined !== json.matron.id) {
+        var currentNode = {
+            text: {
+                title: json.matron.name?json.matron.name:'Kitty #'+json.matron.id,
+                name: 'Matron - Generation: '+json.matron.generation+' - ID: '+json.matron.id
+            },
+            link: { href: 'https://www.cryptokitties.co/kitty/'+json.matron.id },
+            image: json.matron.image_url,
+            parent: parent,
+            children: [],
         };
 
-        request.send();
-    };
+        myKittyGenerationId += json.matron.id;
 
-    var addKitty = function(json, parent) {
-        var myKittyGenerationId;
+        treeNodes.push(currentNode);
+        parent.children.push(currentNode);
+        // console.log('adding matron '+json.matron.id+' of '+json.id);
+        loadKitty(json.matron.id, currentNode);
+    }
 
-        if (generations.length === maxGen) {
-            showKitties();
+    if (undefined != json.sire && undefined !== json.sire.id) {
+        var currentNode = {
+            text: {
+                title: json.sire.name?json.sire.name:'Kitty #'+json.sire.id,
+                name: 'Sire - Generation: '+json.sire.generation+' - ID: '+json.sire.id
+            },
+            link: { href: 'https://www.cryptokitties.co/kitty/'+json.sire.id },
+            image: json.sire.image_url,
+            parent: parent,
+            children: [],
+        };
 
-            return;
-        }
+        myKittyGenerationId += json.sire.id;
 
-        if (undefined === parent) {
-            treeParentNode = {
-                text: {
-                    title: json.name,
-                    name: 'Generation: '+json.generation+' - ID: '+json.id
-                },
-                link: { href: 'https://www.cryptokitties.co/kitty/'+json.id },
-                image: json.image_url,
-                children: [],
-            };
-            parent = treeParentNode;
-        }
+        treeNodes.push(currentNode);
+        parent.children.push(currentNode);
+        // console.log('adding sire '+json.sire.id+' of '+json.id);
+        loadKitty(json.sire.id, currentNode);
+    }
 
-        myKittyGenerationId += json.id;
+    generations.push(myKittyGenerationId);
+};
 
-        if (undefined != json.matron && undefined !== json.matron.id) {
-            var currentNode = {
-                text: {
-                    title: json.matron.name?json.matron.name:'Kitty #'+json.matron.id,
-                    name: 'Matron - Generation: '+json.matron.generation+' - ID: '+json.matron.id
-                },
-                link: { href: 'https://www.cryptokitties.co/kitty/'+json.matron.id },
-                image: json.matron.image_url,
-                parent: parent,
-                children: [],
-            };
+const showKitties = () => {
+    chart = new Treant(
+        [
+            {
+                container: '#results',
+            },
+            treeParentNode,
+            treeNodes,
+        ]
+    );
+};
 
-            myKittyGenerationId += json.matron.id;
-
-            treeNodes.push(currentNode);
-            parent.children.push(currentNode);
-            // console.log('adding matron '+json.matron.id+' of '+json.id);
-            loadKitty(json.matron.id, currentNode);
-        }
-
-        if (undefined != json.sire && undefined !== json.sire.id) {
-            var currentNode = {
-                text: {
-                    title: json.sire.name?json.sire.name:'Kitty #'+json.sire.id,
-                    name: 'Sire - Generation: '+json.sire.generation+' - ID: '+json.sire.id
-                },
-                link: { href: 'https://www.cryptokitties.co/kitty/'+json.sire.id },
-                image: json.sire.image_url,
-                parent: parent,
-                children: [],
-            };
-
-            myKittyGenerationId += json.sire.id;
-
-            treeNodes.push(currentNode);
-            parent.children.push(currentNode);
-            // console.log('adding sire '+json.sire.id+' of '+json.id);
-            loadKitty(json.sire.id, currentNode);
-        }
-
-        generations.push(myKittyGenerationId);
-    };
-
-    var showKitties = function() {
-        chart = new Treant(
-            [
-                {
-                    container: '#results',
-                },
-                treeParentNode,
-                treeNodes,
-            ]
-        );
-    };
-
-    attachEvents();
+attachEvents();
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.css" />
 
