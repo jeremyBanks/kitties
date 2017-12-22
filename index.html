@@ -2,21 +2,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.min.js"></script>
 <script type="module">
-let kittyId;
-let submit;
-let results;
-let maxGen;
-let treeParentNode;
+const kittyId = document.getElementById('kittyId');
+const submit = document.getElementById('loadKitty');
+const results = document.getElementById('results');
 const treeNodes = [];
-let maxGenInput, generations = [];
-
-const attachEvents = () => {
-    kittyId = document.getElementById('kittyId');
-    submit = document.getElementById('loadKitty');
-    results = document.getElementById('results');
-    maxGenInput = document.getElementById('kittyGenerationCount');
-    submit.addEventListener('click', loadKittyFromInput);
-};
+const maxGenInput =  = document.getElementById('kittyGenerationCount');;
+const generations = [];
+let result;
+let maxGen;
+const treeParentNode;
 
 const loadKittyFromInput = () => {
     const kitty = kittyId.value;
@@ -26,6 +20,7 @@ const loadKittyFromInput = () => {
     generations = [];
     loadKitty(kitty);
 };
+submit.addEventListener('click', loadKittyFromInput);
 
 const loadKitty = async (kitty, parent) => {
     const response = await fetch(`https://api.cryptokitties.co/kitties/${kitty}`);
@@ -112,8 +107,6 @@ const showKitties = () => {
         ]
     );
 };
-
-attachEvents();
 </script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.css" />
 
