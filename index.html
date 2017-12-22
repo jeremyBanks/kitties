@@ -1,121 +1,223 @@
 <!doctype html>
+
+
+<!-- dependencies -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.min.js"></script>
-<script type="module">
-const kittyId = document.getElementById('kittyId');
-const submit = document.getElementById('loadKitty');
-const results = document.getElementById('results');
-const treeNodes = [];
-const maxGenInput =  document.getElementById('kittyGenerationCount');;
-let generations;
-let result;
-let maxGen;
-let treeParentNode;
-let chart;
-
-const loadKittyFromInput = () => {
-    const kitty = kittyId.value;
-
-    result = '';
-    maxGen = parseInt(maxGenInput.value, 10);
-    generations = [];
-    loadKitty(kitty);
-};
-submit.addEventListener('click', loadKittyFromInput);
-
-const loadKitty = async (kitty, parent) => {
-    const response = await fetch(`https://api.cryptokitties.co/kitties/${kitty}`);
-    if (!response.ok) throw new Error("request failed");
-    const json = await response.json();
-    addKitty(json, parent);
-};
-
-const addKitty = (json, parent) => {
-    var myKittyGenerationId;
-
-    if (generations.length === maxGen) {
-        showKitties();
-
-        return;
-    }
-
-    if (undefined === parent) {
-        treeParentNode = {
-            text: {
-                title: json.name || 'unknown',
-                name: 'Generation: '+json.generation+' - ID: '+json.id
-            },
-            link: { href: 'https://www.cryptokitties.co/kitty/'+json.id },
-            image: json.image_url,
-            children: [],
-        };
-        parent = treeParentNode;
-    }
-
-    myKittyGenerationId += json.id;
-
-    if (undefined != json.matron && undefined !== json.matron.id) {
-        var currentNode = {
-            text: {
-                title: json.matron.name ? json.matron.name : 'Kitty #' + json.matron.id,
-                name: 'Matron - Generation: '+json.matron.generation+' - ID: '+json.matron.id
-            },
-            link: { href: 'https://www.cryptokitties.co/kitty/'+json.matron.id },
-            image: json.matron.image_url,
-            parent: parent,
-            children: [],
-        };
-
-        myKittyGenerationId += json.matron.id;
-
-        treeNodes.push(currentNode);
-        parent.children.push(currentNode);
-        // console.log('adding matron '+json.matron.id+' of '+json.id);
-        loadKitty(json.matron.id, currentNode);
-    }
-
-    if (undefined != json.sire && undefined !== json.sire.id) {
-        var currentNode = {
-            text: {
-                title: json.sire.name? json.sire.name : 'Kitty #'+json.sire.id,
-                name: 'Sire - Generation: '+json.sire.generation+' - ID: '+json.sire.id
-            },
-            link: { href: 'https://www.cryptokitties.co/kitty/'+json.sire.id },
-            image: json.sire.image_url,
-            parent: parent,
-            children: [],
-        };
-
-        myKittyGenerationId += json.sire.id;
-
-        treeNodes.push(currentNode);
-        parent.children.push(currentNode);
-        // console.log('adding sire '+json.sire.id+' of '+json.id);
-        loadKitty(json.sire.id, currentNode);
-    }
-
-    generations.push(myKittyGenerationId);
-};
-
-const showKitties = () => {
-    chart = new Treant(
-        [
-            {
-                container: '#results',
-            },
-            treeParentNode,
-            treeNodes,
-        ]
-    );
-};
-</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.css" />
 
-<h1>KittyTree</h1>
-<div class="input">
-    <input type="text" id="kittyId" value="309256" />
-    <input type="number" value="7" id="kittyGenerationCount" />
-    <button id="loadKitty">Load</button>
-</div>
-<div class="result" id="results">
-</div>
+
+<!-- styles -->
+<style>
+    body {
+        max-width: 600px;
+        font-family: Verdana, sans-serif;
+        margin: 16px;
+    }
+
+    input, button {
+        font: inherit;
+        padding: 2px 6px;
+    }
+
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    a.inline-kitty {
+        display: inline-block;
+        padding: .166em;
+        border-radius: .166em;
+        background: #FFE;
+        border: 1px solid #444;
+        padding-right: .666em;
+        height: 2.666em;
+    }
+
+        a.inline-kitty:hover {
+            background: #FEE;
+        }
+
+        a.inline-kitty img {
+            vertical-align: -2em;
+            height: 3.833em;
+            position: relative;
+            top: -.666em;
+            left: -.666em;
+            margin-right: -.666em;
+        }
+</style>
+
+
+<!-- layout -->
+<main>
+    <h1>CryptoKitty Family Tree</h1>
+
+    <form id="family">
+        <p>
+            <label>Ancestor Kitty ID: <input type="number" name="kitty-id" min="1" /></label>
+            <button type="submit">Show</button>
+        </p>
+    </form>
+
+    <div id="output">
+
+    </div>
+</main>
+
+
+<!-- inline module shim -->
+<script type="module" data-info="https://stackoverflow.com/a/43834063">let l,e,t
+='script',p=/(from\s+|import\s+)['"](#[\w\-]+)['"]/g,x='textContent',d=document,
+s,o;for(o of d.querySelectorAll(t+'[type=inline-module]'))l=d.createElement(t),o
+.id?l.id=o.id:0,l.type='module',l[x]=o[x].replace(p,(u,a,z)=>(e=d.querySelector(
+t+z+'[type=module][src]'))?a+`/* ${z} */'${e.src}'`:u),l.src=URL.createObjectURL
+(new Blob([l[x]],{type:'application/java'+t})),o.replaceWith(l)//inline</script>
+
+
+<!-- generic utils -->
+<script type="inline-module" id="utils">
+export const el = (tagNamesString, ...childrenAndAttributes) => {
+    let outer, inner;
+    if (!tagNamesString) {
+        // If the user tries to set attributes on this, should be an error.
+        outer = inner = document.createDocumentFragment();
+    } else {
+        const tagNames = tagNamesString.split(' ');
+        outer = inner = document.createElement(tagNames[0]);
+        for (const innerTagName of tagNames.slice(1)) {
+            const newInner = document.createElement(innerTagName);
+            inner.appendChild(newInner);
+            inner = newInner;
+        }
+    }
+
+    addToElement(inner, childrenAndAttributes);
+
+    return outer;
+}
+
+el.setChildren = (parent, ...children) => {
+    const newContents = el('', ...children);
+    parent.textContent = '';
+    parent.appendChild(newContents);
+}
+
+const addToElement = (element, additions, before) => {
+    if (before) element = before.parentElement; // hacky fix for documentfragment parents and promises
+
+    for (const childOrAttributes of additions) {
+        if (Array.isArray(childOrAttributes)) {
+            addToElement(element, childOrAttributes, before);
+        } else if (childOrAttributes instanceof Node) {
+            element.insertBefore(childOrAttributes, before);
+        } else if (
+            typeof childOrAttributes == 'object' &&
+            typeof childOrAttributes.then == 'function'
+        ) {
+            const placeholder = document.createComment(' Promise pending. ');
+            element.insertBefore(placeholder, before);
+            childOrAttributes.then(additions => {
+                placeholder.textContent = ' Promise resolved. ';
+                addToElement(element, [additions], placeholder)
+            }, error => {
+                placeholder.textContent = ` Promise rejected: ${error && error.stack || error} `;
+            });
+        } else if (typeof childOrAttributes == 'object') {
+            if (!(element instanceof Element)) {
+                throw new Error("el() cannot define attributes without an element type.");
+            }
+            for (const key of Object.keys(childOrAttributes)) {
+                element.setAttribute(key, childOrAttributes[key]);
+            }
+        } else if (childOrAttributes != null) {
+            element.insertBefore(document.createTextNode(String(childOrAttributes)), before);
+        }
+    }
+}
+</script>
+
+
+<!-- kitty logic -->
+<script type="inline-module" id="kittycodez">
+import {el} from '#utils';
+
+const form = document.querySelector('form#family');
+const kittyIdEl = form.querySelector('[name=kitty-id]');
+const output = document.querySelector('#output');
+
+export const main = async () => {
+    if (location.search.match(/^\?kitty\-id=\d+$/)) {
+        const kittyId = Number(location.search.slice('?kitty-id='.length));
+
+        kittyIdEl.value = kittyId;
+
+        showTree(kittyId);
+    }
+};
+
+const showTree = async (ancestorKittyId) => {
+    const rootAncestor = Kitty.fetch(ancestorKittyId);
+
+    el.setChildren(output,
+        rootAncestor.then(rootAncestor => el('h2', "Family of ", inlineKitty(rootAncestor))),
+        rootAncestor.then(rootAncestor => el('div', makeTree(rootAncestor))),
+    );
+};
+
+const makeTree = async (kitty) => {
+    console.log(kitty);
+    // TODO: display all children, by spouse?
+    // maybe count different spouses as different families..?
+
+    return el('p', "I'm a tree!");
+};
+
+const inlineKitty = async (kitty) => el(
+    'a',
+    {
+        class: 'inline-kitty',
+        href: `https://www.cryptokitties.co/kitty/${kitty.id}`
+    },
+    el(
+        'img',
+        {
+            src: kitty.image_url
+        }
+    ),
+    `${kitty.name}`
+);
+
+class Kitty {
+    static async fetch(kittyId) {
+        const response = await fetch(`https://api.cryptokitties.co/kitties/${kittyId}`);
+        if (!response.ok) throw new Error("non-ok response from cryptokitties API");
+        const data = await response.json();
+        return Object.assign(new Kitty, data);
+    }
+
+    async fetchChildren() {
+        return self.children.map(data => Kitty.fetch(data.id));
+    }
+
+    async fetchParents() {
+        const parents = [];
+        if (this.matron && this.matron.id) {
+            parents.push(await Kitty.fetch(this.matron.id));
+        }
+        if (this.sire && this.sire.id) {
+            parents.push(await Kitty.fetch(this.sire.id));
+        }
+        return parents;
+    }
+}
+</script>
+
+
+<!-- entry point -->
+<script type="inline-module">
+import { main } from '#kittycodez';
+
+setTimeout(main);
+</script>
