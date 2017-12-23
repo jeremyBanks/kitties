@@ -63,7 +63,7 @@
 <main>
     <form id="family">
         <p>
-            <label>Ancestor Kitty IDs: <input name="kitty-id" placeholder='123, 4567' /></label>
+            <label>Ancestor Kitty ID(s): <input name="kitty-id" placeholder='123, 4567' /></label>
             <button type="submit">Show</button>
         </p>
     </form>
@@ -213,7 +213,7 @@ class Kitty {
         const stored = window.localStorage.getItem(key);
         if (stored) {
             const {data: storedData, timestamp} = JSON.parse(stored);
-            if (Date.now() < timestamp + 60 * 1000) data = storedData;
+            if (Date.now() < timestamp + (69 + Math.random() * 69) * 1000) data = storedData;
         }
 
         if (!data) {
