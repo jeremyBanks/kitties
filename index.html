@@ -42,6 +42,7 @@
 
         .Kitty img {
             vertical-align: -2em;
+            width: 3.833em;
             height: 3.833em;
             position: relative;
             top: -.666em;
@@ -203,7 +204,10 @@ class Kitty {
         let data = null;
 
         const stored = window.localStorage.getItem(key);
-        if (stored) data = JSON.parse(stored).data;
+        if (stored) {
+            const {data: storedData, timestamp} = JSON.parse(stored);
+            if (Date.now() < timestamp + 60 * 1000) data = storedData;
+        }
 
         if (!data) {
             await apiThrottle.tick();
