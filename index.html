@@ -29,16 +29,23 @@
         display: inline-block;
         padding: .166em;
         border-radius: .166em;
+        color: black;
         background: #FFE;
         border: 1px solid #444;
         padding-right: .666em;
         height: 2.666em;
         overflow: hidden;
+        vertical-align: middle;
     }
 
-        .Kitty:hover {
-            background: #FEE;
+        .Kitty.disowned, .Kitty.disowned:hover {
+            background: #CA9;
         }
+
+        .Kitty:hover {
+            background: #EFF;
+        }
+
 
         .Kitty img {
             vertical-align: -2em;
@@ -54,11 +61,9 @@
 
 <!-- layout -->
 <main>
-    <h1>CryptoKitty Family Tree</h1>
-
     <form id="family">
         <p>
-            <label>Ancestor Kitty ID: <input type="number" name="kitty-id" min="1" /></label>
+            <label>Ancestor Kitty IDs: <input name="kitty-id" placeholder='123, 4567' /></label>
             <button type="submit">Show</button>
         </p>
     </form>
@@ -172,33 +177,35 @@ const kittyIdEl = form.querySelector('[name=kitty-id]');
 const output = document.querySelector('#output');
 
 export const main = async () => {
-    if (location.search.match(/^\?kitty\-id=\d+$/)) {
-        const kittyId = Number(location.search.slice('?kitty-id='.length));
+    if (location.search.match(/^\?kitty\-id=.+$/)) {
+        const kittyId = location.search.slice('?kitty-id='.length);
 
         kittyIdEl.value = kittyId;
 
-        showTree(kittyId);
+        for (const id of kittyId.split(/[^0-9]+/g).filter(Boolean).map(Number)) {
+            output.appendChild(el('', Kitty.fetch(id).then(kitty => makeTree(kitty))));
+        }
     }
-};
-
-const showTree = async (ancestorKittyId) => {
-    const rootAncestor = Kitty.fetch(ancestorKittyId);
-
-    el.setChildren(output,
-        rootAncestor.then(rootAncestor => el('h2', "Family of ", rootAncestor)),
-        rootAncestor.then(rootAncestor => el('div', makeTree(rootAncestor))),
-    );
 };
 
 const makeTree = async (kitty) => {
     return el('div',
         el('p', kitty),
-        el('ul', kitty.fetchChildren().then(children => children.map(child => el('li', makeTree(child))))));
+        el('ul', Promise.all(kitty.child_ids.map(id => Kitty.fetch(id))).then(children => children.map(child => el('li', makeTree(child))))));
 };
 
 const apiThrottle = new Throttle(256);
 
 class Kitty {
+    constructor() {
+        this.id = -1;
+        this.name = '⚠ uninitialized ⚠';
+        this.generation = -1;
+        this.children = [{id: -1}];
+        this.matron = {id: -1};
+        this.sire = {id: -1};
+    }
+
     static async fetch(kittyId) {
         const key = `Kitty/${kittyId}`;
         let data = null;
@@ -224,19 +231,26 @@ class Kitty {
         return Object.assign(new Kitty, data);
     }
 
-    async fetchChildren() {
-        return Promise.all(this.children.map(data => Kitty.fetch(data.id)));
+    get owner_wallet_address() {
+        return this.owner && this.owner.address;
     }
 
-    async fetchParents() {
-        const parents = [];
-        if (this.matron && this.matron.id) {
-            parents.push(await Kitty.fetch(this.matron.id));
-        }
-        if (this.sire && this.sire.id) {
-            parents.push(await Kitty.fetch(this.sire.id));
-        }
-        return parents;
+    get owner_name() {
+        return this.owner && this.owner.nickname;
+    }
+    
+    get parent_ids() {
+        const ids = [];
+        if (this.matron) ids.push(this.matron.ids);
+        if (this.sire) ids.push(this.sire.ids);
+        ids.sort((a, b) => (a - b));
+        return ids;
+    }
+    
+    get child_ids() {
+        const ids = this.children.map(kitty => kitty.id);
+        ids.sort((a, b) => (a - b));
+        return ids;
     }
 
     async [el.TO_EL]() {
