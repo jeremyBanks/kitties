@@ -289,7 +289,7 @@ export class Kitty {
             }
 
             const {data: storedData, timestamp} = JSON.parse(stored);
-            if (Date.now() < timestamp + 32 * 1000) {
+            if (Date.now() < timestamp + 1000 * 32) {
                 data = storedData;
                 break;
             }
@@ -303,7 +303,7 @@ export class Kitty {
 
             const storable = JSON.stringify({
                 data: data,
-                timestamp: Date.now()
+                timestamp: Date.now() + Math.random() * 1000 * 512,
             });
 
             Kitty.cache.set(key, storable);
