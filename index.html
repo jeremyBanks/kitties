@@ -242,8 +242,10 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
     const children = await Promise.all(kitty.child_ids.map(id => Kitty.fetch(id)));
     const partner_ids = new Set();
-    for (const kitty of children) {
-        partner_ids.add(...kitty.parent_ids);
+    for (const child of children) {
+        for (const parentId of child.parent_ids) {
+            partner_ids.add(parentId);
+        }
     }
     partner_ids.delete(kitty.id);
 
