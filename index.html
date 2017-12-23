@@ -10,9 +10,8 @@
 <!-- styles -->
 <style>
     body {
-        max-width: 600px;
         font-family: Verdana, sans-serif;
-        margin: 16px;
+        margin: 64px;
     }
 
     input, button {
@@ -26,6 +25,7 @@
     }
 
     .Kitty {
+        width: 256px;
         display: inline-block;
         padding: .166em;
         border-radius: .166em;
@@ -34,8 +34,10 @@
         border: 1px solid #444;
         padding-right: .666em;
         height: 2.666em;
-        overflow: hidden;
         vertical-align: middle;
+        transition: all .1s ease-in-out;
+        position: relative;
+        z-index: 100;
     }
 
         .Kitty.disowned, .Kitty.disowned:hover {
@@ -43,9 +45,14 @@
         }
 
         .Kitty:hover {
-            background: #EFF;
+            background: #EEF;
+            text-shadow:
+                #EEF -1px -1px 2px,
+                #EEF 1px -1px 2px,
+                #EEF 0 0 3px,
+                #EEF 1px -1px 2px,
+                #EEF 1px 1px 2px;
         }
-
 
         .Kitty img {
             vertical-align: -2em;
@@ -55,6 +62,23 @@
             top: -.666em;
             left: -.666em;
             margin-right: -.666em;
+            transition: all .1s ease-in-out;
+            pointer-events: none;
+            position: relative;
+            z-index: 200;
+        }
+        
+            .Kitty:hover img {
+                transform: translate(192px, -48px) scale(4.0);
+            }
+        
+        .Kitty span {
+            position: relative;
+            z-index: 300;
+        }
+
+        li {
+            margin: 2px;
         }
 </style>
 
@@ -189,9 +213,27 @@ export const main = async () => {
 };
 
 const makeTree = async (kitty) => {
-    return el('div',
-        el('p', kitty),
-        el('ul', Promise.all(kitty.child_ids.map(id => Kitty.fetch(id))).then(children => children.map(child => el('li', makeTree(child))))));
+    // TODO: check if owner is same
+
+    const children = await Promise.all(kitty.child_ids.map(id => Kitty.fetch(id)));
+    const partner_ids = new Set();
+    for (const kitty of children) {
+        partner_ids.add(...kitty.parent_ids);
+    }
+    partner_ids.delete(kitty.id);
+
+    const partners = await Promise.all([...partner_ids].sort().map(id => Kitty.fetch(id)));
+
+    if (partners.length == 0) {
+        // no children. easy.
+        return el('div', kitty);
+    } else if (partners.length == 1) {
+        // monogamy. easy!
+        return el('div', kitty, ' + ', [...partners][0], el('ul', children.map(child => el('li', makeTree(child)))));
+    } else {
+        // polygamy. easy?
+        return el('div', kitty, ' + multiple partners', el('ul', children.map(child => el('li', makeTree(child)))));
+    }
 };
 
 const apiThrottle = new Throttle(256);
@@ -213,7 +255,7 @@ class Kitty {
         const stored = window.localStorage.getItem(key);
         if (stored) {
             const {data: storedData, timestamp} = JSON.parse(stored);
-            if (Date.now() < timestamp + (69 + Math.random() * 69) * 1000) data = storedData;
+            if (Date.now() < timestamp + (69 + Math.random() * 696) * 1000) data = storedData;
         }
 
         if (!data) {
@@ -241,8 +283,8 @@ class Kitty {
     
     get parent_ids() {
         const ids = [];
-        if (this.matron) ids.push(this.matron.ids);
-        if (this.sire) ids.push(this.sire.ids);
+        if (this.matron) ids.push(this.matron.id);
+        if (this.sire) ids.push(this.sire.id);
         ids.sort((a, b) => (a - b));
         return ids;
     }
@@ -266,7 +308,10 @@ class Kitty {
                     src: this.image_url
                 }
             ),
-            `${this.name}`
+            el(
+                'span',
+                `${this.name}`
+            )
         );
     }
 }
