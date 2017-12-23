@@ -99,6 +99,11 @@ form {
         position: relative;
         z-index: 300;
     }
+
+    .Kitty code {
+        color: #246;
+        opacity: 0.75;
+    }
 </style>
 
 
@@ -358,7 +363,8 @@ export class Kitty {
             ),
             el(
                 'span',
-                `${this.name || `Kitty #${this.id}`}`
+                `${this.name || `Kitty #${this.id}`} `,
+                el('code', `${this.generation}`)
             )
         );
     }
