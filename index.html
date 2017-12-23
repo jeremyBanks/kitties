@@ -1,17 +1,10 @@
 <!doctype html>
 
-
-<!-- dependencies -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.2.7/raphael.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/treant-js/1.0/Treant.css" />
-
-
 <!-- styles -->
 <style>
 body {
     font-family: Verdana, sans-serif;
-    margin: 64px;
+    margin: 32px;
 }
 
 input, button {
@@ -24,8 +17,24 @@ a {
     color: inherit;
 }
 
-p, ul, ol, li {
-    margin: 2px;
+p, ol, ul, li {
+    margin: 0;
+}
+
+ul {
+    margin-left: 4px;
+    margin-bottom: 8px;
+    border-left: 1px solid black;
+    list-style-type: square;
+    padding-left: 16px;
+}
+
+li {
+    padding: 2px;
+}
+
+form {
+    margin-bottom: 32px;
 }
 
 .Kitty {
@@ -44,10 +53,6 @@ p, ul, ol, li {
     z-index: 100;
 }
 
-    .Kitty.disowned, .Kitty.disowned:hover {
-        background: #CA9;
-    }
-
     .Kitty:hover {
         background: #EEF;
         text-shadow:
@@ -57,6 +62,20 @@ p, ul, ol, li {
             #EEF 1px -1px 2px,
             #EEF 1px 1px 2px;
     }
+
+    .unrelated .Kitty {
+        background: #CCC;
+    }
+
+        .unrelated .Kitty:hover {
+            background: #A9C;
+            text-shadow:
+                #A9C -1px -1px 2px,
+                #A9C 1px -1px 2px,
+                #A9C 0 0 3px,
+                #A9C 1px -1px 2px,
+                #A9C 1px 1px 2px;
+        }
 
     .Kitty img {
         vertical-align: -2em;
@@ -213,7 +232,13 @@ export const main = async () => {
 };
 
 const makeTree = async (kitty, rootKitty = kitty) => {
-    // TODO: check if owner is same
+    const renderKitty = (kitty) => {
+        if (kitty.owner_wallet_address !== rootKitty.owner_wallet_address) {
+            return el('span', {class: 'unrelated'}, kitty);
+        } else {
+            return kitty; // it can render itself
+        }
+    };
 
     const children = await Promise.all(kitty.child_ids.map(id => Kitty.fetch(id)));
     const partner_ids = new Set();
@@ -226,15 +251,15 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
     if (partners.length == 0) {
         // no children. easy.
-        return el('p', kitty);
+        return el('p', renderKitty(kitty));
     } else if (partners.length == 1) {
         // monogamy. easy!
-        return el('p', kitty, ' + ', [...partners][0], el('ul', children.map(child => el('li', makeTree(child, rootKitty)))));
+        return el('p', renderKitty(kitty), ' + ', renderKitty(partners[0]), el('ul', children.map(child => el('li', makeTree(child, rootKitty)))));
     } else {
         // polygamy. easy?
-        return el('p', kitty,
+        return el('p', renderKitty(kitty),
             partners.map(partner => el(
-                'p', '+ ', partner,
+                'p', '+ ', renderKitty(partner),
                 el('ul', children.filter(child => child.parent_ids.includes(partner.id)).map(child => el('li', makeTree(child, rootKitty)))))));
     }
 };
