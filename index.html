@@ -123,6 +123,8 @@ form {
 
 
 <!-- inline module shim -->
+<!-- this is a goofy hack, but external modules don't work
+     in file:// URLs, and I'd like this to work locally. -->
 <script type="module" data-info="https://stackoverflow.com/a/43834063">let l,e,t
 ='script',p=/(from\s+|import\s+)['"](#[\w\-]+)['"]/g,x='textContent',d=document,
 s,o;for(o of d.querySelectorAll(t+'[type=inline-module]'))l=d.createElement(t),o
@@ -216,9 +218,75 @@ export class Throttle {
 </script>
 
 
+<!-- cryptokitties API interface -->
+<script type="inline-module" id="cryptokitties">
+import {Throttle} from '#utils';
+
+export class CryptoKitties {
+    constructor() {
+        this.apiRoot_ = 'https://api.cryptokitties.co/';
+        this.apiThrottle_ = new Throttle(256);
+    }
+
+    async fetch_(path) {
+        await this.apiThrottle_.tick();
+        const response = await fetch(this.apiRoot_ + path);
+        if (!response.ok) {
+            throw new Error("non-ok response from cryptokitties API");
+        }
+        const json = await response.json();
+        return json;
+    }
+
+    async *kitties(ownerAddress='', offset=0, limit=Infinity) {
+        const kitties = [];
+        for (;;) {
+            const page = await this.pageOfKitties_(
+                ownerAddress, offset + kitties.length, Math.min(100, limit - kitties.length));
+
+            kitties.push(...page.kitties);
+
+            if (kitties.length >= limit) {
+                // reached limit
+                break;
+            }
+
+            if (kitties.length >= page.kitties.total) {
+                // last page
+                break;
+            }
+
+            if (page.kitties.length === 0) {
+                // past last page
+                break;
+            }
+        }
+        return {
+            total: kitties.length,
+            offset: startOffset,
+            limit: limit,
+            kitties: kitties,
+        };
+    }
+
+    async pageOfKitties_(ownerAddress, offset, limit) {
+        return this.fetch_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}`);
+    }
+
+    async kitty(kittyId) {
+        return this.fetch_(`kitties/${kittyId}`);
+    }
+};
+
+export const cryptokitties = new CryptoKitties();
+export default cryptokitties;
+</script>
+
+
 <!-- kitty logic -->
 <script type="inline-module" id="kittycodez">
-import {el, Throttle} from '#utils';
+import {el} from '#utils';
+import cryptokitties from '#cryptokitties';
 
 const form = document.querySelector('form#family');
 const kittyIdEl = form.querySelector('[name=kitty-id]');
@@ -271,8 +339,6 @@ const makeTree = async (kitty, rootKitty = kitty) => {
     }
 };
 
-const apiThrottle = new Throttle(256);
-
 export class Kitty {
     constructor() {
         this.id = -1;
@@ -303,10 +369,7 @@ export class Kitty {
         }
 
         if (!data) {
-            await apiThrottle.tick();
-            const response = await fetch(`https://api.cryptokitties.co/kitties/${kittyId}`);
-            if (!response.ok) throw new Error("non-ok response from cryptokitties API");
-            data = await response.json();
+            const data = await cryptokitties.kitty(kittyId);
 
             const storable = JSON.stringify({
                 data: data,
