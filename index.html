@@ -37,73 +37,82 @@ form {
     margin-bottom: 32px;
 }
 
-.Kitty {
-    width: 256px;
+
+a.kitty {
+    --kitty-size: 192px;
+    --text-size: calc(var(--kitty-size) / 16);
+    --name-color: black;
+    --info-color: #444;
+    --text-shadow-color: rgba(255, 255, 255, 0.5);
+
     display: inline-block;
-    padding: .166em;
-    border-radius: .166em;
-    color: black;
-    background: #FFE;
-    border: 1px solid #444;
-    padding-right: .666em;
-    height: 2.666em;
-    vertical-align: middle;
-    transition: all .1s ease-in-out;
     position: relative;
-    z-index: 100;
+    vertical-align: middle;
+    box-sizing: border-box;
+    width: calc(var(--kitty-size) * 12/16);
+    height: calc(var(--kitty-size) * 10/16);
+
+    text-decoration: none;
+    color: var(--text-color);
+    font: var(--text-size) monospace;
+    user-select: all;
 }
 
-    .Kitty:hover {
-        background: #EEF;
-        text-shadow:
-            #EEF -1px -1px 2px,
-            #EEF 1px -1px 2px,
-            #EEF 0 0 3px,
-            #EEF 1px -1px 2px,
-            #EEF 1px 1px 2px;
-    }
+a.kitty > * {
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    height: auto;
+}
 
-    .unrelated .Kitty {
-        background: #CCC;
-    }
+a.kitty > img {
+    pointer-events: none;
+    width: var(--kitty-size);
+    height: var(--kitty-size);
+    top: calc(var(--kitty-size) * -3/16);
+    left: calc(var(--kitty-size) * -3/16);
+}
 
-        .unrelated .Kitty:hover {
-            background: #A9C;
-            text-shadow:
-                #A9C -1px -1px 2px,
-                #A9C 1px -1px 2px,
-                #A9C 0 0 3px,
-                #A9C 1px -1px 2px,
-                #A9C 1px 1px 2px;
-        }
+a.kitty > .name {
+    font-family: verdana, sans-serif;
+    height: auto;
+    right: calc(var(--text-size));
+    bottom: var(--text-size);
+    text-align: center;
+    font-weight: bold;
+    color: var(--name-color);
+    text-shadow:
+        0 0 3px var(--text-shadow-color),
+        2px 0 3px var(--text-shadow-color),
+        2px 2px 3px var(--text-shadow-color),
+        0 2px 3px var(--text-shadow-color),
+        -2px 2px 3px var(--text-shadow-color),
+        -2px 0 3px var(--text-shadow-color),
+        -2px -2px 3px var(--text-shadow-color),
+        0 -2px 3px var(--text-shadow-color),
+        2px -2px 3px var(--text-shadow-color);
+}
 
-    .Kitty img {
-        vertical-align: -2em;
-        width: 3.833em;
-        height: 3.833em;
-        position: relative;
-        top: -.666em;
-        left: -.666em;
-        margin-right: -.666em;
-        transition: all .1s ease-in-out;
-        pointer-events: none;
-        position: relative;
-        z-index: 200;
-    }
-    
-        .Kitty:hover img {
-            transform: translate(192px, -48px) scale(4.0);
-        }
-    
-    .Kitty span {
-        position: relative;
-        z-index: 300;
-    }
+a.kitty > .info {
+    bottom: 0;
+    right: 0;
+    color: var(--info-color);
+    text-shadow:
+        0 0 3px var(--text-shadow-color),
+        2px 0 3px var(--text-shadow-color),
+        2px 2px 3px var(--text-shadow-color),
+        0 2px 3px var(--text-shadow-color),
+        -2px 2px 3px var(--text-shadow-color),
+        -2px 0 3px var(--text-shadow-color),
+        -2px -2px 3px var(--text-shadow-color),
+        0 -2px 3px var(--text-shadow-color),
+        2px -2px 3px var(--text-shadow-color);
+}
 
-    .Kitty code {
-        color: #246;
-        opacity: 0.75;
-    }
+a.kitty:hover > .name, a.kitty:hover > .info {
+    color: transparent;
+    --text-shadow-color: rgba(64, 64, 64, 0.125);
+}
 </style>
 
 
@@ -111,7 +120,7 @@ form {
 <main>
     <form id="family">
         <p>
-            <label>Ancestor Kitty ID(s): <input name="kitty-id" placeholder='123, 4567' /></label>
+            <label>Owner Address <input name="owner-address" placeholder='0x12345678...' /></label>
             <button type="submit">Show</button>
         </p>
     </form>
@@ -133,8 +142,8 @@ t+z+'[type=module][src]'))?a+`/* ${z} */'${e.src}'`:u),l.src=URL.createObjectURL
 (new Blob([l[x]],{type:'application/java'+t})),o.replaceWith(l)//inline</script>
 
 
-<!-- generic utils -->
-<script type="inline-module" id="utils">
+<!-- dom utils -->
+<script type="inline-module" id="dom">
 export const el = (tagNamesString, ...childrenAndAttributes) => {
     let outer, inner;
     if (!tagNamesString) {
@@ -202,7 +211,11 @@ const addToElement = (element, additions, before) => {
         }
     }
 };
+</script>
 
+
+<!-- async utils -->
+<script type="inline-module" id="async">
 export class Throttle {
     constructor(minInterval = 1000) {
         this.minInterval = minInterval;
@@ -218,9 +231,9 @@ export class Throttle {
 </script>
 
 
-<!-- cryptokitties API interface -->
+<!-- cryptokitties web API -->
 <script type="inline-module" id="cryptokitties">
-import {Throttle} from '#utils';
+import {Throttle} from '#async';
 
 export class CryptoKitties {
     constructor() {
@@ -238,13 +251,16 @@ export class CryptoKitties {
         return json;
     }
 
-    async *kitties(ownerAddress='', offset=0, limit=Infinity) {
+    async *kitties(ownerAddress='', search='', offset=0, limit=Infinity) {
         const kitties = [];
         for (;;) {
-            const page = await this.pageOfKitties_(
-                ownerAddress, offset + kitties.length, Math.min(100, limit - kitties.length));
+            const page = await this.kitties_(
+                ownerAddress, offset + kitties.length, Math.min(100, limit - kitties.length), false, search);
 
-            kitties.push(...page.kitties);
+            for (const kitty of page.kitties) {
+                kitties.push(kitty);
+                yield await Kitty.fetch(kitty.id);
+            }
 
             if (kitties.length >= limit) {
                 // reached limit
@@ -261,16 +277,10 @@ export class CryptoKitties {
                 break;
             }
         }
-        return {
-            total: kitties.length,
-            offset: startOffset,
-            limit: limit,
-            kitties: kitties,
-        };
     }
 
-    async pageOfKitties_(ownerAddress, offset, limit) {
-        return this.fetch_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}`);
+    async kitties_(ownerAddress='', offset=0, limit=100, parents=false, search='') {
+        return this.fetch_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}&parents=${parents}&search=${search}`);
     }
 
     async kitty(kittyId) {
@@ -280,37 +290,132 @@ export class CryptoKitties {
 
 export const cryptokitties = new CryptoKitties();
 export default cryptokitties;
+
+export class Kitty {
+    constructor() {
+        this.id = -1;
+        this.name = '⚠ uninitialized ⚠';
+        this.generation = -1;
+        this.children = null;
+        this.matron = null;
+        this.sire = null;
+    }
+
+    static async fetch(kittyId) {
+        const key = `Kitty/${kittyId}`;
+        let data = null;
+
+        for (const stored of [
+            Kitty.cache.get(key),
+            window.localStorage.getItem(key), 
+        ]) {
+            if (!stored) {
+                continue;
+            }
+
+            const {data: storedData, timestamp} = JSON.parse(stored);
+            if (Date.now() < timestamp + 1000 * 32) {
+                data = storedData;
+                break;
+            }
+        }
+
+        if (!data) {
+            data = await cryptokitties.kitty(kittyId);
+
+            const storable = JSON.stringify({
+                data: data,
+                timestamp: Date.now() + Math.random() * 1000 * 512,
+            });
+
+            Kitty.cache.set(key, storable);
+            try {
+                localStorage.setItem(key, storable);
+            } catch (ex) {
+                console.error(ex);
+                console.error("clearing localStorage");
+                localStorage.clear();
+            }
+        }
+        
+        return Object.assign(new Kitty(), data);
+    }
+
+    get owner_wallet_address() {
+        return this.owner && this.owner.address;
+    }
+
+    get owner_name() {
+        return this.owner && this.owner.nickname;
+    }
+    
+    get parent_ids() {
+        const ids = [];
+        if (this.matron) ids.push(this.matron.id);
+        if (this.sire) ids.push(this.sire.id);
+        ids.sort((a, b) => (a - b));
+        return ids;
+    }
+    
+    get child_ids() {
+        const ids = this.children.map(kitty => kitty.id);
+        ids.sort((a, b) => (a - b));
+        return ids;
+    }
+}
+
+Kitty.cache = new Map();
 </script>
 
 
-<!-- kitty logic -->
-<script type="inline-module" id="kittycodez">
-import {el} from '#utils';
-import cryptokitties from '#cryptokitties';
+<!-- our logic -->
+<script type="inline-module" id="tree">
+import {el} from '#dom';
+import {cryptokitties, Kitty} from '#cryptokitties';
 
 const form = document.querySelector('form#family');
-const kittyIdEl = form.querySelector('[name=kitty-id]');
+const ownerAddressEl = form.querySelector('[name=owner-address]');
 const output = document.querySelector('#output');
 
 export const main = async () => {
-    if (location.search.match(/^\?kitty\-id=.+$/)) {
-        const kittyId = decodeURIComponent(location.search.slice('?kitty-id='.length));
+    if (location.search.match(/^\?owner\-address=.+$/)) {
+        const ownerAddress = decodeURIComponent(location.search.slice('?owner-address='.length));
 
-        kittyIdEl.value = kittyId;
+        ownerAddressEl.value = ownerAddress;
 
-        for (const id of kittyId.split(/[^0-9]+/g).filter(Boolean).map(Number)) {
-            output.appendChild(el('', Kitty.fetch(id).then(kitty => makeTree(kitty))));
+        if (ownerAddress) {
+            for await (const kitty of cryptokitties.kitties(ownerAddress, 'gen:0 selkirk')) {
+                output.appendChild(el('', makeTree(kitty)));
+
+                await new Promise(resolve => setTimeout(resolve, 2500));
+            }
         }
     }
 };
 
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty) => {
+        let className = 'kitty'
+
         if (kitty.owner_wallet_address !== rootKitty.owner_wallet_address) {
-            return el('span', {class: 'unrelated'}, kitty);
-        } else {
-            return kitty; // it can render itself
+            className += ' unrelated';
         }
+
+        return el(
+            'a',
+            {
+                class: className,
+                href: `https://www.cryptokitties.co/kitty/${kitty.id}`
+            },
+            el(
+                'img',
+                {
+                    src: kitty.image_url
+                }
+            ),
+            el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
+            el('span', {class: 'name'}, `${kitty.name}`),
+        );
     };
 
     const children = await Promise.all(kitty.child_ids.map(id => Kitty.fetch(id)));
@@ -338,108 +443,13 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 el('ul', children.filter(child => child.parent_ids.includes(partner.id)).map(child => el('li', makeTree(child, rootKitty)))))));
     }
 };
-
-export class Kitty {
-    constructor() {
-        this.id = -1;
-        this.name = '⚠ uninitialized ⚠';
-        this.generation = -1;
-        this.children = [{id: -1}];
-        this.matron = {id: -1};
-        this.sire = {id: -1};
-    }
-
-    static async fetch(kittyId) {
-        const key = `Kitty/${kittyId}`;
-        let data = null;
-
-        for (const stored of [
-            Kitty.cache.get(key),
-            window.localStorage.getItem(key), 
-        ]) {
-            if (!stored) {
-                continue;
-            }
-
-            const {data: storedData, timestamp} = JSON.parse(stored);
-            if (Date.now() < timestamp + 1000 * 32) {
-                data = storedData;
-                break;
-            }
-        }
-
-        if (!data) {
-            const data = await cryptokitties.kitty(kittyId);
-
-            const storable = JSON.stringify({
-                data: data,
-                timestamp: Date.now() + Math.random() * 1000 * 512,
-            });
-
-            Kitty.cache.set(key, storable);
-            try {
-                localStorage.setItem(key, storable);
-            } catch (ex) {
-                console.error(ex);
-                console.error("clearing localStorage");
-                localStorage.clear();
-            }
-        }
-        
-        return Object.assign(new Kitty, data);
-    }
-
-    get owner_wallet_address() {
-        return this.owner && this.owner.address;
-    }
-
-    get owner_name() {
-        return this.owner && this.owner.nickname;
-    }
-    
-    get parent_ids() {
-        const ids = [];
-        if (this.matron) ids.push(this.matron.id);
-        if (this.sire) ids.push(this.sire.id);
-        ids.sort((a, b) => (a - b));
-        return ids;
-    }
-    
-    get child_ids() {
-        const ids = this.children.map(kitty => kitty.id);
-        ids.sort((a, b) => (a - b));
-        return ids;
-    }
-
-    async [el.TO_EL]() {
-        return el(
-            'a',
-            {
-                class: 'Kitty',
-                href: `https://www.cryptokitties.co/kitty/${this.id}`
-            },
-            el(
-                'img',
-                {
-                    src: this.image_url
-                }
-            ),
-            el(
-                'span',
-                `${this.name || `Kitty #${this.id}`} `,
-                el('code', `${this.generation}`)
-            )
-        );
-    }
-}
-
-Kitty.cache = new Map();
 </script>
 
 
 <!-- entry point -->
 <script type="inline-module">
-import { main, Kitty } from '#kittycodez';
+import { Kitty } from '#cryptokitties';
+import { main } from '#tree';
 
 setTimeout(main);
 
