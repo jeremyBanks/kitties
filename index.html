@@ -12,11 +12,6 @@ input, button {
     padding: 2px 6px;
 }
 
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
 p, ol, ul, li {
     margin: 0;
 }
@@ -38,10 +33,21 @@ form {
 }
 
 a.kitty {
+    animation-name: appear;
+    animation-duration: 0.5s;
     border-bottom: 1px solid black;
     margin-right: -16px;
     margin-left: -18px;
 }
+@keyframes appear {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 
 
 a.kitty {
@@ -64,6 +70,47 @@ a.kitty {
     user-select: all;
 }
 
+a.kitty.repeated > * {
+    --name-color: royalblue;
+    --info-color: royalblue;
+}
+a.kitty.repeated > img {
+    opacity: 0.25;
+}
+a.kitty.repeated > img {
+    opacity: 0.25;
+}
+
+a.kitty.unrelated {
+    --name-color: brown;
+    --info-color: brown;
+}
+a.kitty.unrelated > img {
+    opacity: 0.25;
+}
+
+a.kitty:target, a.kitty:active {
+    animation-name: fade-highlight-background;
+    animation-duration: 3s;
+}
+@keyframes fade-highlight-background {
+    0% {
+        background: rgba(255, 255, 255, 0);
+    }
+    10% {
+        background: #FF0;
+    }
+    20% {
+        background: rgba(255, 255, 255, 0);
+    }
+    30% {
+        background: #FF0;
+    }
+    100% {
+        background: rgba(255, 255, 255, 0);
+    }
+}
+
 a.kitty > * {
     display: block;
     position: absolute;
@@ -80,6 +127,7 @@ a.kitty > img {
 }
 
 a.kitty > .name {
+    left: 0;
     font-family: verdana, sans-serif;
     height: auto;
     right: calc(var(--text-size));
@@ -390,10 +438,10 @@ export const main = async () => {
         ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
-            for await (const kitty of cryptokitties.kitties(ownerAddress, 'gen:0 selkirk')) {
+            for await (const kitty of cryptokitties.kitties(ownerAddress, 'gen:0')) {
                 output.appendChild(el('', makeTree(kitty)));
 
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
@@ -401,17 +449,29 @@ export const main = async () => {
 
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty) => {
-        let className = 'kitty'
+        let className = 'kitty';
+        let href =`https://www.cryptokitties.co/kitty/${kitty.id}`;
 
-        if (kitty.owner_wallet_address !== rootKitty.owner_wallet_address) {
+        const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
+        if (unrelated) {
             className += ' unrelated';
         }
+
+        const id = `/kitty/${kitty.id}`;
+        const existing = document.getElementById(id);
+
+        if (existing) {
+            href = `#${id}`;
+            className += ' repeated';
+        }
+
 
         return el(
             'a',
             {
+                id: id,
                 class: className,
-                href: `https://www.cryptokitties.co/kitty/${kitty.id}`
+                href: href
             },
             el(
                 'img',
@@ -435,7 +495,11 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
     const partners = await Promise.all([...partner_ids].sort().map(id => Kitty.fetch(id)));
 
-    if (partners.length == 0) {
+    const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
+    const id = `/kitty/${kitty.id}`;
+    const existing = document.getElementById(id);
+
+    if (unrelated || partners.length == 0 || existing) {
         // no children. easy.
         return el('p', renderKitty(kitty));
     } else if (partners.length == 1) {
