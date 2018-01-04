@@ -48,6 +48,23 @@ a.kitty {
     }
 }
 
+a.kitty > img {
+    animation-name: appear-fancy;
+    animation-duration: 0.5s;
+
+}
+@keyframes appear-fancy {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(0);
+    }
+    75% {
+        transform: scale(1);
+    }
+}
+
 
 
 a.kitty {
@@ -439,13 +456,13 @@ export const main = async () => {
 
         if (ownerAddress) {
             for await (const kitty of cryptokitties.kitties(ownerAddress, 'gen:0')) {
-                output.appendChild(el('', makeTree(kitty)));
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                output.appendChild(await makeTree(kitty));
             }
         }
     }
 };
+
+const renderedIds = new Set();
 
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty) => {
@@ -457,14 +474,15 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             className += ' unrelated';
         }
 
-        const id = `/kitty/${kitty.id}`;
-        const existing = document.getElementById(id);
+        let id = `/kitty/${kitty.id}`;
 
-        if (existing) {
+        if (renderedIds.has(kitty.id)) {
             href = `#${id}`;
+            id = '';
             className += ' repeated';
+        } else {
+            renderedIds.add(kitty.id);
         }
-
 
         return el(
             'a',
@@ -497,20 +515,20 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
     const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
     const id = `/kitty/${kitty.id}`;
-    const existing = document.getElementById(id);
+    const existing = renderedIds.has(kitty.id);
 
     if (unrelated || partners.length == 0 || existing) {
         // no children. easy.
         return el('p', renderKitty(kitty));
     } else if (partners.length == 1) {
         // monogamy. easy!
-        return el('p', renderKitty(kitty), ' + ', renderKitty(partners[0]), el('ul', children.map(child => el('li', makeTree(child, rootKitty)))));
+        return el('p', renderKitty(kitty), ' + ', renderKitty(partners[0]), el('ul', await Promise.all(children.map(async (child) => el('li', await makeTree(child, rootKitty))))));
     } else {
         // polygamy. easy?
         return el('p', renderKitty(kitty),
-            partners.map(partner => el(
+            await Promise.all(partners.map(async (partner) => el(
                 'p', '+ ', renderKitty(partner),
-                el('ul', children.filter(child => child.parent_ids.includes(partner.id)).map(child => el('li', makeTree(child, rootKitty)))))));
+                el('ul', await Promise.all(children.filter(child => child.parent_ids.includes(partner.id)).map(async (child) => el('li', await makeTree(child, rootKitty)))))))));
     }
 };
 </script>
