@@ -495,9 +495,10 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 className += ' repeated';
             } else {
                 id = `/kitty/${kitty.id}`;
-                renderedIds.add(kitty.id);
             }
         }
+
+        renderedIds.add(kitty.id);
 
         return el(
             'a',
