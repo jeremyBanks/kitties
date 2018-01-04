@@ -464,9 +464,13 @@ export const main = async () => {
 
         if (ownerAddress) {
             const kitties = [];
+            let r, p = new Promise(resolve => { r = resolve });
+            form.appendChild(el('p', `Loading `, p, `kitties owned by `, el('code', ownerAddress), '...'));
+            
             for await (const kitty of cryptokitties.kitties(ownerAddress)) {
                 kitties.push(kitty);
             }
+            r(` ${kitties.length} `);
             kitties.sort((a, b) => (a.id - b.id));
             kitties.sort((a, b) => (a.generation - b.generation));
             for (const kitty of kitties) {
