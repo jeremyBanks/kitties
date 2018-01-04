@@ -36,6 +36,10 @@ form {
     margin-bottom: 32px;
 }
 
+.poly {
+    border-left: 1px dashed black;
+}
+
 a.kitty {
     animation-name: appear;
     animation-duration: 0.5s;
@@ -195,7 +199,7 @@ a.kitty:hover > .name, a.kitty:hover > .info {
 <main>
     <form id="family">
         <p>
-            <label>Owner Address: <input name="owner-address" placeholder='0x12345678...' /></label>
+            <label>Owner Address: <input name="owner-address" placeholder='0x1234567890123456789012345678901234567890' /></label>
             <button type="submit">Show</button>
         </p>
     </form>
@@ -459,7 +463,13 @@ export const main = async () => {
         ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
-            for await (const kitty of cryptokitties.kitties(ownerAddress, 'gen:0')) {
+            const kitties = [];
+            for await (const kitty of cryptokitties.kitties(ownerAddress)) {
+                kitties.push(kitty);
+            }
+            kitties.sort((a, b) => (a.id - b.id));
+            kitties.sort((a, b) => (a.generation - b.generation));
+            for (const kitty of kitties) {
                 output.appendChild(await makeTree(kitty));
             }
         }
@@ -474,18 +484,19 @@ const makeTree = async (kitty, rootKitty = kitty) => {
         let href =`https://www.cryptokitties.co/kitty/${kitty.id}`;
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
+
+        let id = '';
+
         if (unrelated) {
             className += ' unrelated';
-        }
-
-        let id = `/kitty/${kitty.id}`;
-
-        if (renderedIds.has(kitty.id)) {
-            href = `#${id}`;
-            id = '';
-            className += ' repeated';
         } else {
-            renderedIds.add(kitty.id);
+            if (renderedIds.has(kitty.id)) {
+                href = `#${id}`;
+                className += ' repeated';
+            } else {
+                id = `/kitty/${kitty.id}`;
+                renderedIds.add(kitty.id);
+            }
         }
 
         return el(
@@ -502,7 +513,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, `${kitty.name}`),
+            el('span', {class: 'name'}, `${kitty.name || ''}`),
         );
     };
 
@@ -521,7 +532,9 @@ const makeTree = async (kitty, rootKitty = kitty) => {
     const id = `/kitty/${kitty.id}`;
     const existing = renderedIds.has(kitty.id);
 
-    if (unrelated || partners.length == 0 || existing) {
+    if (kitty == rootKitty && existing) {
+        return el('');
+    } else if (unrelated || partners.length == 0 || existing) {
         // no children. easy.
         return el('p', renderKitty(kitty));
     } else if (partners.length == 1) {
@@ -530,9 +543,9 @@ const makeTree = async (kitty, rootKitty = kitty) => {
     } else {
         // polygamy. easy?
         return el('p', renderKitty(kitty),
-            await Promise.all(partners.map(async (partner) => el(
+            el('div', {class: 'poly'}, Promise.all(partners.map(async (partner) => el(
                 'p', '+ ', renderKitty(partner),
-                el('ul', await Promise.all(children.filter(child => child.parent_ids.includes(partner.id)).map(async (child) => el('li', await makeTree(child, rootKitty)))))))));
+                el('ul', await Promise.all(children.filter(child => child.parent_ids.includes(partner.id)).map(async (child) => el('li', await makeTree(child, rootKitty))))))))));
     }
 };
 </script>
