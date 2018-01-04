@@ -7,9 +7,13 @@ body {
     margin: 32px;
 }
 
-input, button {
-    font: inherit;
+input, button, label {
+    font-family: monospace;
     padding: 2px 6px;
+}
+
+input[name="owner-address"] {
+    width: 50ex;
 }
 
 p, ol, ul, li {
@@ -191,7 +195,7 @@ a.kitty:hover > .name, a.kitty:hover > .info {
 <main>
     <form id="family">
         <p>
-            <label>Owner Address <input name="owner-address" placeholder='0x12345678...' /></label>
+            <label>Owner Address: <input name="owner-address" placeholder='0x12345678...' /></label>
             <button type="submit">Show</button>
         </p>
     </form>
