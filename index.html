@@ -491,7 +491,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             className += ' unrelated';
         } else {
             if (renderedIds.has(kitty.id)) {
-                href = `#${id}`;
+                href = `#/kitty/${kitty.id}`;
                 className += ' repeated';
             } else {
                 id = `/kitty/${kitty.id}`;
