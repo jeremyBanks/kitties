@@ -478,14 +478,23 @@ export const main = async () => {
         if (ownerAddress) {
             const kitties = [];
             let r, p = new Promise(resolve => { r = resolve });
-            form.appendChild(el('p', `Loading `, p, ` kitties owned by `, el('code', ownerAddress), '...'));
+            form.appendChild(el('br'));
+            form.appendChild(el('p', p, ` kitties owned by `, el('code', ownerAddress), ':'));
             
             for await (const kitty of cryptokitties.kitties(ownerAddress)) {
                 kitties.push(kitty);
             }
             r(` ${kitties.length} `);
-            kitties.sort((a, b) => (a.id - b.id));
-            kitties.sort((a, b) => (a.generation - b.generation));
+            kitties.sort((a, b) => {
+                if (a.generation < b.generation)
+                    return -1;
+                else if (a.generation > b.generation)
+                    return +1;
+                else if (a.id < b.id)
+                    return -1;
+                else
+                    return +1;
+            });
             for (const kitty of kitties) {
                 const t = makeTree(kitty)
                 output.appendChild(el('', t));
@@ -504,6 +513,8 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
 
+        // BUG: assiging IDs to kitties when they appear in a spouse position messes
+        //      things up if they're not monogamous.
         let id = '';
 
         if (unrelated) {
