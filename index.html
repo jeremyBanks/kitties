@@ -1,10 +1,30 @@
 <!doctype html>
 
+
+<main>
+    <form id="family">
+        <p>
+            <label>Owner Address: <input name="owner-address" placeholder='0x1234567890123456789012345678901234567890' /></label>
+            <button type="submit">Show</button>
+        </p>
+    </form>
+
+    <div id="output">
+
+    </div>
+</main>
+
+
 <!-- styles -->
 <style>
 body {
     font-family: Verdana, sans-serif;
     margin: 32px;
+}
+
+progress {
+    width: 1em;
+    height: 1em;
 }
 
 input, button, label {
@@ -195,21 +215,6 @@ a.kitty:hover > .name, a.kitty:hover > .info {
 </style>
 
 
-<!-- layout -->
-<main>
-    <form id="family">
-        <p>
-            <label>Owner Address: <input name="owner-address" placeholder='0x1234567890123456789012345678901234567890' /></label>
-            <button type="submit">Show</button>
-        </p>
-    </form>
-
-    <div id="output">
-
-    </div>
-</main>
-
-
 <!-- inline module shim -->
 <!-- this is a goofy hack, but external modules don't work
      in file:// URLs, and I'd like this to work locally. -->
@@ -269,12 +274,20 @@ const addToElement = (element, additions, before) => {
             typeof childOrAttributes == 'object' &&
             typeof childOrAttributes.then == 'function'
         ) {
-            const placeholder = document.createComment(' Promise pending. ');
+            const placeholder = document.createElement('progress');
+            placeholder.textContent = ' Promise pending. ';
+            placeholder.promise = childOrAttributes;
+            placeholder.style.width = '1em';
+            placeholder.style.height = '1em';
             element.insertBefore(placeholder, before);
             childOrAttributes.then(additions => {
+                placeholder.style.display = 'none';
+                placeholder.value = 1;
                 placeholder.textContent = ' Promise resolved. ';
                 addToElement(element, [additions], placeholder)
             }, error => {
+                placeholder.style.background = 'red';
+                placeholder.value = 0;
                 placeholder.textContent = ` Promise rejected: ${error && error.stack || error} `;
                 console.error(error);
             });
@@ -310,7 +323,7 @@ export class Throttle {
 </script>
 
 
-<!-- cryptokitties web API -->
+<!-- cryptokitties API -->
 <script type="inline-module" id="cryptokitties">
 import {Throttle} from '#async';
 
@@ -465,7 +478,7 @@ export const main = async () => {
         if (ownerAddress) {
             const kitties = [];
             let r, p = new Promise(resolve => { r = resolve });
-            form.appendChild(el('p', `Loading `, p, `kitties owned by `, el('code', ownerAddress), '...'));
+            form.appendChild(el('p', `Loading `, p, ` kitties owned by `, el('code', ownerAddress), '...'));
             
             for await (const kitty of cryptokitties.kitties(ownerAddress)) {
                 kitties.push(kitty);
@@ -474,7 +487,9 @@ export const main = async () => {
             kitties.sort((a, b) => (a.id - b.id));
             kitties.sort((a, b) => (a.generation - b.generation));
             for (const kitty of kitties) {
-                output.appendChild(await makeTree(kitty));
+                const t = makeTree(kitty)
+                output.appendChild(el('', t));
+                await t;
             }
         }
     }
