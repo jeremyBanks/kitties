@@ -140,18 +140,23 @@ a.kitty:target, a.kitty:active {
 }
 @keyframes fade-highlight-background {
     0% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
         background: rgba(255, 255, 255, 0);
     }
     10% {
+        box-shadow: 0 0 6px 6px #FF0;
         background: #FF0;
     }
     20% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
         background: rgba(255, 255, 255, 0);
     }
     30% {
+        box-shadow: 0 0 6px 6px #FF0;
         background: #FF0;
     }
     100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
         background: rgba(255, 255, 255, 0);
     }
 }
@@ -175,6 +180,7 @@ a.kitty > .name {
     left: 0;
     font-family: verdana, sans-serif;
     height: auto;
+    overflow-wrap: break-word;
     right: calc(var(--text-size));
     bottom: var(--text-size);
     text-align: center;
@@ -208,9 +214,11 @@ a.kitty > .info {
         2px -2px 3px var(--text-shadow-color);
 }
 
-a.kitty:hover > .name, a.kitty:hover > .info {
-    color: transparent;
-    --text-shadow-color: rgba(64, 64, 64, 0.125);
+a.kitty:hover {
+    --hover-color: rgba(175, 225, 255, 0.75);
+    z-index: 5000;
+    background: var(--hover-color);
+    box-shadow: 0 0 6px 6px var(--hover-color);
 }
 </style>
 
@@ -399,6 +407,7 @@ export class Kitty {
 
         for (const stored of [
             Kitty.cache.get(key),
+            window.sessionStorage.getItem(key), 
             window.localStorage.getItem(key), 
         ]) {
             if (!stored) {
@@ -427,6 +436,13 @@ export class Kitty {
                 console.error(ex);
                 console.error("clearing localStorage");
                 localStorage.clear();
+            }
+            try {
+                sessionStorage.setItem(key, storable);
+            } catch (ex) {
+                console.error(ex);
+                console.error("clearing sessionStorage");
+                sessionStorage.clear();
             }
         }
         
@@ -509,7 +525,7 @@ const renderedIds = new Set();
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty) => {
         let className = 'kitty';
-        let href =`https://www.cryptokitties.co/kitty/${kitty.id}`;
+        let href =`https://cryptokittydex.com/kitties/${kitty.id}`;
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
 
