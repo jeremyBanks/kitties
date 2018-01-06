@@ -23,11 +23,13 @@ def main():
     subscripts = '/lIO0'
 
     with open(out_filename, mode='wt', encoding='utf-8') as f:
-        for i in range(1, max_id + 1):
+        for i in range(max_id + 1):
             kitty = kitties.get(i, default_kitty)
             f.write(''.join(
                 gene[-1] + subscripts[gene.count(gene[-1])]
-                for gene in (kitty['genes_kai'][i*4:i*4+4] for i in range(len(kitty['genes_kai'])//4))
+                for gene in (
+                    kitty['genes_kai'][i*4:i*4+4]
+                    for i in range(len(kitty['genes_kai'])//4))
             ) + '\n')
 
 

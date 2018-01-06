@@ -331,6 +331,39 @@ export class Throttle {
 </script>
 
 
+<!-- local cryptokittydex data API -->
+<script type="inline-module" id="cryptokittydex">
+import {Throttle} from '#async';
+
+
+export class CryptoKittyDex {
+    constructor() {
+        this.apiRoot_ = './cryptokittydex/';
+        this.apiThrottle_ = new Throttle(256);
+    }
+
+    async abridgedGene(kittyId) {
+        const gene_record_length = 25;
+        const response = fetch(this.apiRoot_ + 'genes.txt', {
+            headers: new Headers({
+                'Range': `bytes=${gene_record_length * kittyId}-${gene_record_length * (kittyId + 1) - 1}`
+            })
+        });
+        if (response.status !== 206) {
+            throw new Error("bad response from server");
+        }
+        const result = await response.text();
+        if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
+            return null;
+        }
+        return result;
+    }
+}
+
+export const cryptokittydex = new CryptoKittyDex();
+export default cryptokittydex;
+</script>
+
 <!-- cryptokitties API -->
 <script type="inline-module" id="cryptokitties">
 import {Throttle} from '#async';
@@ -341,7 +374,7 @@ export class CryptoKitties {
         this.apiThrottle_ = new Throttle(256);
     }
 
-    async fetch_(path) {
+    async json_(path) {
         await this.apiThrottle_.tick();
         const response = await fetch(this.apiRoot_ + path);
         if (!response.ok) {
@@ -380,11 +413,11 @@ export class CryptoKitties {
     }
 
     async kitties_(ownerAddress='', offset=0, limit=100, parents=false, search='') {
-        return this.fetch_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}&parents=${parents}&search=${search}`);
+        return this.json_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}&parents=${parents}&search=${search}`);
     }
 
     async kitty(kittyId) {
-        return this.fetch_(`kitties/${kittyId}`);
+        return this.json_(`kitties/${kittyId}`);
     }
 };
 
@@ -480,6 +513,7 @@ Kitty.cache = new Map();
 <script type="inline-module" id="tree">
 import {el} from '#dom';
 import {cryptokitties, Kitty} from '#cryptokitties';
+import {cryptokittydex} from '#cryptokittydex';
 
 const form = document.querySelector('form#family');
 const ownerAddressEl = form.querySelector('[name=owner-address]');
@@ -560,7 +594,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, `${kitty.name || ''}`),
+            el('span', {class: 'name'}, kitty.name || el('', cryptokittydex.abridgedGene(kitty.id))),
         );
     };
 
