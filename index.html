@@ -365,8 +365,7 @@ export class CryptoKittyDex {
     async abridgedGene(kittyId) {
         const genes = await this.genes_;
         const geneRecordLength = 25;
-        const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1));
-        debugger;
+        const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * kittyId);
         if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
             console.error(`kitty ID ${kittyId} explicitly does not exist in our genetic data set`);
             result = '';
