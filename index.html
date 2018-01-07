@@ -339,7 +339,7 @@ import {Throttle} from '#async';
 export class CryptoKittyDex {
     constructor() {
         this.genes_ = (async () => {
-            const response = fetch('./cryptokittydex/genes.txt')';
+            const response = fetch('./cryptokittydex/genes.txt');
             if (response.status !== 206) {
                 console.error(response);
                 throw new Error("bad response from server");
