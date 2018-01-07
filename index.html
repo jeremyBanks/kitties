@@ -60,6 +60,10 @@ form {
     border-left: 1px dashed black;
 }
 
+.gene {
+    color: rgb(128, 255, 128);
+}
+
 a.kitty {
     animation-name: appear;
     animation-duration: 0.5s;
@@ -360,10 +364,10 @@ export class CryptoKittyDex {
             console.error(`kitty ID ${kittyId} is out of bounds of our genetic data set!`);
         }
         return result
-            .replace('l', '₁')
-            .replace('I', '₂')
-            .replace('O', '₃')
-            .replace('0', '₄');
+            .replace(/l/g, '₁')
+            .replace(/I/g, '₂')
+            .replace(/O/g, '₃')
+            .replace(/0/g, '₄');
     }
 }
 
