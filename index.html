@@ -67,7 +67,7 @@ form {
 a.kitty > span.gene {
     font: 12px Consolas, monospace;
     font-weight: bold;
-    width: 80px;
+    text-align: right;
     left: auto;
     top: 50px;
     right: 8px;
@@ -365,6 +365,7 @@ export class CryptoKittyDex {
     }
 
     async abridgedGene(kittyId) {
+        const result = 'cO7OfIaO6I5IeI406O6Ic0eO';
         const genes = await this.genes_;
         const geneRecordLength = 25;
         const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1) - 1);
@@ -646,7 +647,10 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
             kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
-            el('span', {class: 'gene'}, cryptokittydex.abridgedGene(kitty.id)),
+            el('span', {class: 'gene'}, cryptokittydex.abridgedGene(kitty.id).then(s => {
+                const i = Math.floor(s.length / 2);
+                return [s.slice(0, i), el('br'), s.slice(i)]
+            })),
         );
     };
 
