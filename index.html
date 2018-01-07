@@ -23,6 +23,7 @@
 body {
     font-family: Verdana, sans-serif;
     margin: 32px;
+    margin-bottom: 512px;
 }
 
 progress {
@@ -403,7 +404,7 @@ export class CryptoKitties {
         return json;
     }
 
-    async *kitties(ownerAddress='', search='', offset=0, limit=Infinity) {
+    async *kittyIds(ownerAddress='', search='', offset=0, limit=Infinity) {
         const kitties = [];
         for (;;) {
             const page = await this.kitties_(
@@ -411,7 +412,7 @@ export class CryptoKitties {
 
             for (const kitty of page.kitties) {
                 kitties.push(kitty);
-                yield await Kitty.fetch(kitty.id);
+                yield kitty.id;
             }
 
             if (kitties.length >= limit) {
@@ -545,15 +546,19 @@ export const main = async () => {
         ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
-            const kitties = [];
+            const kittyIds = [];
             let r, p = new Promise(resolve => { r = resolve });
             form.appendChild(el('br'));
             form.appendChild(el('p', p, ` kitties owned by `, el('code', ownerAddress), ':'));
-            
-            for await (const kitty of cryptokitties.kitties(ownerAddress)) {
-                kitties.push(kitty);
+
+            for await (const kittyId of cryptokitties.kittyIds(ownerAddress)) {
+                kittyIds.push(kittyId);
             }
-            r(` ${kitties.length} `);
+            r(` ${kittyIds.length} `);
+
+            let s, t = new Promise(resolve => { s = resolve });
+            form.appendChild(el('div', t))
+            const kitties = await Promise.all(kittyIds.map(id => Kitty.fetch(id)));
             kitties.sort((a, b) => {
                 if (a.generation < b.generation)
                     return -1;
@@ -564,10 +569,12 @@ export const main = async () => {
                 else
                     return +1;
             });
+            s('');
+
             for (const kitty of kitties) {
-                const t = makeTree(kitty)
-                output.appendChild(el('', t));
-                await t;
+                const tree = makeTree(kitty);
+                output.appendChild(el('', tree));
+                await tree;
             }
         }
     }
