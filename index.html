@@ -343,10 +343,10 @@ export class CryptoKittyDex {
     }
 
     async abridgedGene(kittyId) {
-        const gene_record_length = 25;
-        const response = fetch(this.apiRoot_ + 'genes.txt', {
+        const geneRecordLength = 25;
+        const response = await fetch(this.apiRoot_ + 'genes.txt', {
             headers: new Headers({
-                'Range': `bytes=${gene_record_length * kittyId}-${gene_record_length * (kittyId + 1) - 1}`
+                'Range': `bytes=${geneRecordLength * kittyId}-${geneRecordLength * (kittyId + 1) - 1}`
             })
         });
         if (response.status !== 206) {
