@@ -66,6 +66,7 @@ form {
 
 a.kitty > span.gene {
     font: 12px Consolas, monospace;
+    font-weight: bold;
     width: 80px;
     left: auto;
     top: 50px;
@@ -370,7 +371,8 @@ export class CryptoKittyDex {
         if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
             throw new Error(`kitty ID ${kittyId} explicitly does not exist in our genetic data set`);
         } else if (result === '') {
-            throw new Error(`kitty ID ${kittyId} is out of bounds of our genetic data set!`);
+            result = '';
+            console.warn(`kitty ID ${kittyId} is out of bounds of our genetic data set!`);
         }
         return result
             .replace(/l/g, '₁')
@@ -541,14 +543,24 @@ const output = document.querySelector('#output');
 
 export const main = async () => {
     if (location.search.match(/^\?owner\-address=.+$/)) {
+        let targetId = '';
+        if (location.hash > '#') {
+            targetId = location.hash.slice(1);
+            if (document.getElementById(targetId)) {
+                // it already exists, so we don't actually need to handle it
+                targetId = null;
+            }
+        }
+
         const ownerAddress = decodeURIComponent(location.search.slice('?owner-address='.length));
 
         ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
+            form.textContent = '';
+
             const kittyIds = [];
             let r, p = new Promise(resolve => { r = resolve });
-            form.appendChild(el('br'));
             form.appendChild(el('p', p, ` kitties owned by `, el('code', ownerAddress), ':'));
 
             for await (const kittyId of cryptokitties.kittyIds(ownerAddress)) {
@@ -575,6 +587,11 @@ export const main = async () => {
                 const tree = makeTree(kitty);
                 output.appendChild(el('', tree));
                 await tree;
+
+                if (document.getElementById(targetId)) {
+                    location.hash = '';
+                    location.hash = targetId;
+                }
             }
         }
     }
