@@ -356,6 +356,9 @@ export class CryptoKittyDex {
         if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
             return null;
         }
+        if (result == '') {
+            throw new Error("this kitty ID is out of bounds of our data set");
+        }
         return result;
     }
 }
