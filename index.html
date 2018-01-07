@@ -294,7 +294,7 @@ const addToElement = (element, additions, before) => {
                 placeholder.textContent = ' Promise resolved. ';
                 addToElement(element, [additions], placeholder)
             }, error => {
-                placeholder.style.background = 'red';
+                placeholder.style.borderColor = 'red';
                 placeholder.value = 0;
                 placeholder.textContent = ` Promise rejected: ${error && error.stack || error} `;
                 console.error(error);
@@ -357,7 +357,7 @@ export class CryptoKittyDex {
             return null;
         }
         if (result == '') {
-            throw new Error("this kitty ID is out of bounds of our data set");
+            throw new Error("this kitty ID is out of bounds of our genetic data set!");
         }
         return result;
     }
