@@ -367,10 +367,9 @@ export class CryptoKittyDex {
         const geneRecordLength = 25;
         const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1) - 1);
         if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
-            console.error(`kitty ID ${kittyId} explicitly does not exist in our genetic data set`);
-            result = '';
+            throw new Error(`kitty ID ${kittyId} explicitly does not exist in our genetic data set`);
         } else if (result === '') {
-            console.error(`kitty ID ${kittyId} is out of bounds of our genetic data set!`);
+            throw new Error(`kitty ID ${kittyId} is out of bounds of our genetic data set!`);
         }
         return result
             .replace(/l/g, '₁')
