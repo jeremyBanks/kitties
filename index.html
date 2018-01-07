@@ -350,6 +350,7 @@ import {Throttle} from '#async';
 
 export class CryptoKittyDex {
     constructor() {
+        this.apiThrottle_ = new Throttle(256);
         this.genes_ = (async () => {
             await this.apiThrottle_.tick();
             const response = await fetch('./cryptokittydex/genes.txt');
@@ -359,7 +360,6 @@ export class CryptoKittyDex {
             }
             return await response.text();
         })();
-        this.apiThrottle_ = new Throttle(256);
     }
 
     async abridgedGene(kittyId) {
