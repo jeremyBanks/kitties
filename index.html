@@ -597,7 +597,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, kitty.name || el('', cryptokittydex.abridgedGene(kitty.id))),
+            el('span', {class: 'name'}, kitty.name + el('', cryptokittydex.abridgedGene(kitty.id))),
         );
     };
 
