@@ -1,5 +1,8 @@
 <!doctype html>
 
+<title>CryptoKitty Family Trees</title>
+
+<link rel="icon" href="data:,">
 
 <main>
     <form id="family">
@@ -348,6 +351,7 @@ import {Throttle} from '#async';
 export class CryptoKittyDex {
     constructor() {
         this.genes_ = (async () => {
+            await this.apiThrottle_.tick();
             const response = await fetch('./cryptokittydex/genes.txt');
             if (response.status !== 200) {
                 console.error(response);
@@ -359,10 +363,10 @@ export class CryptoKittyDex {
     }
 
     async abridgedGene(kittyId) {
-        await this.apiThrottle_.tick();
         const genes = await this.genes_;
         const geneRecordLength = 25;
         const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1));
+        debugger;
         if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
             console.error(`kitty ID ${kittyId} explicitly does not exist in our genetic data set`);
             result = '';
