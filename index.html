@@ -310,7 +310,7 @@ const addToElement = (element, additions, before) => {
             }, error => {
                 placeholder.style.border = '.5em double red';
                 placeholder.value = 0;
-                placeholder.title = `error: ${error && error.stack || error}`;
+                placeholder.title = `${error && error.stack || error || 'Error'}`;
                 console.error(error);
             });
         } else if (typeof childOrAttributes == 'object') {
@@ -608,7 +608,7 @@ const renderedIds = new Set();
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty, asSpouse=false) => {
         let className = 'kitty';
-        let href =`https://cryptokittydex.com/kitties/${kitty.id}`;
+        let href =`https://www.cryptokitties.co/kitty/${kitty.id}`;
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
 
