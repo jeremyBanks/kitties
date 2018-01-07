@@ -345,7 +345,7 @@ export class CryptoKittyDex {
                 throw new Error("bad response from server");
             }
             return await response.text();
-        }());
+        })();
         this.apiThrottle_ = new Throttle(256);
     }
 
