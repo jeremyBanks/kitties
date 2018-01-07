@@ -151,6 +151,8 @@ a.kitty.unrelated > img {
 a.kitty:target, a.kitty:active {
     animation-name: fade-highlight-background;
     animation-duration: 3s;
+    animation-fill-mode: forwards;
+
 }
 @keyframes fade-highlight-background {
     0% {
@@ -170,8 +172,8 @@ a.kitty:target, a.kitty:active {
         background: #FF0;
     }
     100% {
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-        background: rgba(255, 255, 255, 0);
+        box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.25);
+        background: rgba(255, 255, 0, 0.25);
     }
 }
 
@@ -365,7 +367,6 @@ export class CryptoKittyDex {
     }
 
     async abridgedGene(kittyId) {
-        const result = 'cO7OfIaO6I5IeI406O6Ic0eO';
         const genes = await this.genes_;
         const geneRecordLength = 25;
         const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1) - 1);
