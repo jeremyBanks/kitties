@@ -292,7 +292,7 @@ const addToElement = (element, additions, before) => {
             typeof childOrAttributes.then == 'function'
         ) {
             const placeholder = document.createElement('progress');
-            placeholder.textContent = ' Promise pending. ';
+            placeholder.title = 'pending';
             placeholder.promise = childOrAttributes;
             placeholder.style.width = '1em';
             placeholder.style.height = '1em';
@@ -300,12 +300,12 @@ const addToElement = (element, additions, before) => {
             childOrAttributes.then(additions => {
                 placeholder.style.display = 'none';
                 placeholder.value = 1;
-                placeholder.textContent = ' Promise resolved. ';
+                placeholder.title = 'resolved';
                 addToElement(element, [additions], placeholder)
             }, error => {
-                placeholder.style.borderColor = 'red';
+                placeholder.style.border = '.5em double red';
                 placeholder.value = 0;
-                placeholder.textContent = ` Promise rejected: ${error && error.stack || error} `;
+                placeholder.title = `error: ${error && error.stack || error}`;
                 console.error(error);
             });
         } else if (typeof childOrAttributes == 'object') {
@@ -359,6 +359,7 @@ export class CryptoKittyDex {
     }
 
     async abridgedGene(kittyId) {
+        await this.apiThrottle_.tick();
         const genes = await this.genes_;
         const geneRecordLength = 25;
         const result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1));
@@ -610,7 +611,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, kitty.name),
+            kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
             el('span', {class: 'gene'}, cryptokittydex.abridgedGene(kitty.id)),
         );
     };
