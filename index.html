@@ -596,6 +596,7 @@ export const main = async () => {
                 if (document.getElementById(targetId)) {
                     location.hash = '';
                     location.hash = targetId;
+                    targetId = null;
                 }
             }
         }
