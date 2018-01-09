@@ -74,6 +74,22 @@ a.kitty > span.gene {
     bottom: auto;
 }
 
+span.gene-1 {
+    opacity: 0.25;
+}
+
+span.gene-2 {
+    opacity: 0.5;
+}
+
+span.gene-3 {
+    opacity: 0.75;
+}
+
+span.gene-4 {
+    opacity: 1.0;
+}
+
 a.kitty {
     animation-name: appear;
     animation-duration: 0.5s;
@@ -633,6 +649,14 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             renderedIds.add(kitty.id);
         }
 
+        function f(s) {
+            if (s === '₁') return el('span', {class: 'gene-1'}, s);
+            if (s === '₂') return el('span', {class: 'gene-2'}, s);
+            if (s === '₃') return el('span', {class: 'gene-3'}, s);
+            if (s === '₄') return el('span', {class: 'gene-4'}, s);
+            return el('span', {class: 'gene-value'}, s);
+        }
+
         return el(
             'a',
             {
@@ -650,7 +674,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
             el('span', {class: 'gene', title: "Dominant genes and their purity"}, cryptokittydex.abridgedGene(kitty.id).then(s => {
                 const i = Math.floor(s.length / 2);
-                return [s.slice(0, i), el('br'), s.slice(i)]
+                return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
             })),
         );
     };
