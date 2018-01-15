@@ -7,8 +7,13 @@
 <main>
     <form id="family">
         <p>
-            <label>Owner Address: <input name="owner-address" placeholder='0x1234567890123456789012345678901234567890' /></label>
-            <button type="submit">Show</button>
+            <label><span>Owner Address (Required):</span> <input name="owner-address" placeholder='0x06012c8cf97bead5deae237070f9587f8e7a266d' value='0x06012c8cf97bead5deae237070f9587f8e7a266d' /></label>
+        </p>
+        <p>
+            <label><span>Target Kai Genome:</span> <input name="target-kai" placeholder='a111b222c333d444e555f666g777h888i999jaaakbbb' /></label>
+        </p>
+        <p>
+            <label><span></span> <button type="submit">Show Me The Kitties</button></label>
         </p>
     </form>
 
@@ -36,12 +41,26 @@ input, button, label {
     padding: 2px 6px;
 }
 
-input[name="owner-address"] {
-    width: 50ex;
+button {
+    font-weight: bold;
+}
+
+label span {
+    display: inline-block;
+    text-align: right;
+    width: 15em;
+}
+
+input {
+    width: 64ex;
 }
 
 p, ol, ul, li {
     margin: 0;
+}
+
+form p + p {
+    margin-top: 4px;
 }
 
 ul {
@@ -387,9 +406,10 @@ export class CryptoKittyDex {
 
     async abridgedGene(kittyId) {
         const genes = await this.genes_;
-        const geneRecordLength = 25;
+        const geneRecordLength = 50;
         let result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1) - 1);
-        if (result === '+0/l/I/O/0/0+l+I+O+0+I/I') {
+        if (result === '+0/l/I/O/0/0+l+I+O+0+I/I' ||
+            result === '+++++++/++//+//////////////+//++/+++++++//++++//') {
             throw new Error(`kitty ID ${kittyId} is missing from our CryptoKittydex genetic data`);
         } else if (result === '') {
             result = '';
@@ -573,7 +593,8 @@ export const main = async () => {
             }
         }
 
-        const ownerAddress = decodeURIComponent(location.search.slice('?owner-address='.length));
+        const params = new URLSearchParams(location.search);
+        const ownerAddress = params.get('owner-address');
 
         ownerAddressEl.value = ownerAddress;
 
