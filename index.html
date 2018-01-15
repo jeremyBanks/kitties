@@ -394,32 +394,60 @@ export class CryptoKittyDex {
     constructor() {
         this.apiThrottle_ = new Throttle(256);
         this.genes_ = (async () => {
-            await this.apiThrottle_.tick();
-            const response = await fetch('./cryptokittydex/genes.txt');
-            if (response.status !== 200) {
-                console.error(response);
-                throw new Error("bad response from server");
+            try {
+                await this.apiThrottle_.tick();
+                const response = await fetch('./cryptokittydex/genes.js');
+                if (response.status !== 200) {
+                    console.error(response);
+                    throw new Error("bad response from server");
+                }
+                return await response.text();
+            } catch (error) {
+                console.error("failed to fetch() genes", error);
             }
-            return await response.text();
+
+            const s = document.createElement('script');
+            const loaded = new Promise((resolve, reject) => {
+                s.addEventListener('load', resolve, {once: true});
+                s.addEventListener('error', reject, {once: true});
+            });
+            s.src = 'genes.js';
+            document.body.appendChild(s);
+            await loaded;
+            const lines = window['/genes.js/byLine'];
+            if (!lines) {
+                throw new Error("genes seemed to load, but are now missing!");
+            }
+            return lines.join('\n');
         })();
     }
 
-    async abridgedGene(kittyId) {
+    async abridgedGeneome(kittyId) {
+        const geneome = await this.geneome(kittyId);
+        const pieces = [];
+
+        for (let i = 0; i < geneome.length; i++) {
+            const genes = geneome.slice(i * 4, (i + 1) * 4);
+            const dominant = genes[3];
+            const count = genes.filter(c => c == dominant).length;
+            pieces.push(dominant, '₁₂₃₄'[count - 1]);
+        }
+
+        return pieces.join('');
+    }
+
+    async geneome(kittyId) {
         const genes = await this.genes_;
         const geneRecordLength = 50;
-        let result = genes.slice(geneRecordLength * kittyId, geneRecordLength * (kittyId + 1) - 1);
-        if (result === '+0/l/I/O/0/0+l+I+O+0+I/I' ||
-            result === '+++++++/++//+//////////////+//++/+++++++//++++//') {
+        const recordSeparatorLength = 1;
+        let result = genes.slice((geneRecordLength + recordSeparatorLength) * kittyId, stride * kittyId + geneRecordLength);
+        if (result.includes('/')) {
             throw new Error(`kitty ID ${kittyId} is missing from our CryptoKittydex genetic data`);
-        } else if (result === '') {
+        } else if (result.length < geneRecordLength) {
             result = '';
             console.warn(`kitty ID ${kittyId} is too new to be in our CryptoKittydex genetic data`);
         }
-        return result
-            .replace(/l/g, '₁')
-            .replace(/I/g, '₂')
-            .replace(/O/g, '₃')
-            .replace(/0/g, '₄');
+        return result;
     }
 }
 
@@ -654,8 +682,6 @@ const makeTree = async (kitty, rootKitty = kitty) => {
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
 
-        // BUG: assiging IDs to kitties when they appear in a spouse position messes
-        //      things up if they're not monogamous.
         let id = '';
 
         if (unrelated) {
@@ -696,7 +722,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
             kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
-            el('span', {class: 'gene', title: "Dominant genes and their purity"}, cryptokittydex.abridgedGene(kitty.id).then(s => {
+            el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id).then(s => {
                 const i = Math.floor(s.length / 2);
                 return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
             })),
