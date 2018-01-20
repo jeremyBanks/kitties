@@ -146,6 +146,13 @@ a.kitty > img {
 }
 
 
+a.kitty:target > img {
+    transform: scale(4) translate(117px, 64px);
+    background: rgba(255, 255, 0, 0.125);
+    border: 4px solid rgba(255, 255, 0, 1.0);
+}
+
+
 
 a.kitty {
     --kitty-size: 192px;
@@ -187,32 +194,8 @@ a.kitty.unrelated > img {
 }
 
 a.kitty:target, a.kitty:active {
-    animation-name: fade-highlight-background;
-    animation-duration: 3s;
-    animation-fill-mode: forwards;
+    background: rgba(255, 255, 0, 1.0);
 
-}
-@keyframes fade-highlight-background {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-        background: rgba(255, 255, 255, 0);
-    }
-    10% {
-        box-shadow: 0 0 6px 6px #FF0;
-        background: #FF0;
-    }
-    20% {
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-        background: rgba(255, 255, 255, 0);
-    }
-    30% {
-        box-shadow: 0 0 6px 6px #FF0;
-        background: #FF0;
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.25);
-        background: rgba(255, 255, 0, 0.25);
-    }
 }
 
 a.kitty > * {
