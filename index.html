@@ -274,6 +274,10 @@ a.kitty:hover {
     background: var(--hover-color);
     box-shadow: 0 0 6px 6px var(--hover-color);
 }
+
+a[href^="#"] {
+    cursor: default;
+}
 </style>
 
 
@@ -628,7 +632,7 @@ export const main = async () => {
         ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
-            form.textContent = '';
+            form.appendChild(el('hr'));
 
             const kittyIds = [];
             let r, p = new Promise(resolve => { r = resolve });
@@ -679,7 +683,7 @@ const renderedIds = new Set();
 const makeTree = async (kitty, rootKitty = kitty) => {
     const renderKitty = (kitty, asSpouse=false) => {
         let className = 'kitty';
-        let href =`https://www.cryptokitties.co/kitty/${kitty.id}`;
+        let href =`https://cryptokittydex.com/kitties/${kitty.id}`;
 
         const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
 
@@ -690,13 +694,15 @@ const makeTree = async (kitty, rootKitty = kitty) => {
         } else if (asSpouse) {
             // related spouses should link to their primary location,
             // even if it's lower-down.
-            href = `#/kitty/${kitty.id}`;
+            href = `#kitty-${kitty.id}`;
             className += ' repeated';
         } else if (renderedIds.has(kitty.id)) {
-            href = `#/kitty/${kitty.id}`;
+            href = `#kitty-${kitty.id}`;
             className += ' repeated';
         } else {
-            id = `/kitty/${kitty.id}`;
+            // yes, we're linking to ourself.
+            href = `#kitty-${kitty.id}`;
+            id = `kitty-${kitty.id}`;
             renderedIds.add(kitty.id);
         }
 
@@ -742,7 +748,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
     const partners = await Promise.all([...partner_ids].sort().map(id => Kitty.fetch(id)));
 
     const unrelated = kitty.owner_wallet_address !== rootKitty.owner_wallet_address;
-    const id = `/kitty/${kitty.id}`;
+    const id = `kitty-${kitty.id}`;
     const existing = renderedIds.has(kitty.id);
 
     if (kitty == rootKitty && existing) {
