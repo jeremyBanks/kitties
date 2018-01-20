@@ -411,7 +411,7 @@ export class CryptoKittyDex {
                 s.addEventListener('load', resolve, {once: true});
                 s.addEventListener('error', reject, {once: true});
             });
-            s.src = 'genes.js';
+            s.src = './cryptokittydex/genes.js';
             document.body.appendChild(s);
             await loaded;
             const lines = window['/genes.js/byLine'];
@@ -429,7 +429,7 @@ export class CryptoKittyDex {
         for (let i = 0; i < geneome.length; i++) {
             const genes = geneome.slice(i * 4, (i + 1) * 4);
             const dominant = genes[3];
-            const count = genes.filter(c => c == dominant).length;
+            const count = [...genes].filter(c => c == dominant).length;
             pieces.push(dominant, '₁₂₃₄'[count - 1]);
         }
 
@@ -440,7 +440,8 @@ export class CryptoKittyDex {
         const genes = await this.genes_;
         const geneRecordLength = 50;
         const recordSeparatorLength = 1;
-        let result = genes.slice((geneRecordLength + recordSeparatorLength) * kittyId, stride * kittyId + geneRecordLength);
+        const stride = geneRecordLength + recordSeparatorLength;
+        let result = genes.slice(stride * kittyId, stride * kittyId + geneRecordLength);
         if (result.includes('/')) {
             throw new Error(`kitty ID ${kittyId} is missing from our CryptoKittydex genetic data`);
         } else if (result.length < geneRecordLength) {
