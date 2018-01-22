@@ -617,10 +617,18 @@ import {cryptokittydex} from '#cryptokittydex';
 
 const form = document.querySelector('form#family');
 const ownerAddressEl = form.querySelector('[name=owner-address]');
+const targetKaiEl = form.querySelector('[name=target-kai]');
 const output = document.querySelector('#output');
 
 export const main = async () => {
-    if (location.search.match(/^\?owner\-address=.+$/)) {
+    const params = new URLSearchParams(location.search);
+    const ownerAddress = params.get('owner-address') || '';
+    const targetKai = params.get('target-kai') || '';
+
+    ownerAddressEl.value = ownerAddress;
+    targetKaiEl.value = targetKai;
+
+    if (ownerAddress) {
         let targetId = '';
         if (location.hash > '#') {
             targetId = location.hash.slice(1);
@@ -630,10 +638,6 @@ export const main = async () => {
             }
         }
 
-        const params = new URLSearchParams(location.search);
-        const ownerAddress = params.get('owner-address');
-
-        ownerAddressEl.value = ownerAddress;
 
         if (ownerAddress) {
             form.appendChild(el('hr'));
