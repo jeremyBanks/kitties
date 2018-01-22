@@ -3,19 +3,21 @@ import glob
 
 
 def main():
-    filename = sorted(glob.glob('*.csv'))[-1]
     out_filename = 'genes.js'
-
     kitties = {}
 
-    print("Reading", filename)
-    with open(filename, mode='rt') as f:
-        for row in csv.DictReader(f):
-            kitties[int(row['id'])] = row
+    for filename in reversed(sorted(glob.glob('*.csv*'))):
+        print("Reading", filename)
+        with open(filename, mode='rt') as f:
+            for row in csv.DictReader(f):
+                kitty_id = int(row['id'])
+                if kitty_id not in kitties:
+                    kitties[kitty_id] = row
 
     max_id = max(kitties)
 
     print("Loaded", len(kitties), "🐈 kitties, with max id", max_id)
+    print(max_id - len(kitties), "kitty IDs unaccounted-for.")
 
     default_kitty = {
         'genes_kai':

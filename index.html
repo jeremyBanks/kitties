@@ -17,9 +17,7 @@
         </p>
     </form>
 
-    <div id="output">
-
-    </div>
+    <div id="output"></div>
 </main>
 
 
@@ -517,7 +515,12 @@ export class Kitty {
         const key = `Kitty/${kittyId}`;
         let data = null;
 
-        for (const stored of [
+        let gotNewData;
+        const newData = new Promise(resolve => { gotNewData = resolve });
+
+        let dataIsStale = false;
+
+        for (let stored of [
             Kitty.cache.get(key),
             window.sessionStorage.getItem(key), 
             window.localStorage.getItem(key), 
@@ -526,35 +529,53 @@ export class Kitty {
                 continue;
             }
 
-            const {data: storedData, timestamp} = JSON.parse(stored);
-            if (Date.now() < timestamp + 1000 * 32) {
+            stored = await stored;
+
+            const {data: storedData, staleAt, deletedAt} = JSON.parse(stored);
+            if (!(storedData && staleAt && deletedAt)) deletedAt = 0;
+            if (Date.now() < deletedAt) {
+                if (staleAt < Date.now()) {
+                    dataIsStale = true;
+                }
                 data = storedData;
                 break;
             }
         }
 
-        if (!data) {
-            data = await cryptokitties.kitty(kittyId);
+        if (!data || dataIsStale) {
+            gotNewData((async () => {
+                // hack to block duplicate requests
+                Kitty.cache.set(key, newData.then(_ => Kitty.cache.get(key)));
 
-            const storable = JSON.stringify({
-                data: data,
-                timestamp: Date.now() + Math.random() * 1000 * 512,
-            });
+                const data = await cryptokitties.kitty(kittyId);
 
-            Kitty.cache.set(key, storable);
-            try {
-                localStorage.setItem(key, storable);
-            } catch (ex) {
-                console.error(ex);
-                console.error("clearing localStorage");
-                localStorage.clear();
-            }
-            try {
-                sessionStorage.setItem(key, storable);
-            } catch (ex) {
-                console.error(ex);
-                console.error("clearing sessionStorage");
-                sessionStorage.clear();
+                const storable = JSON.stringify({
+                    data: data,
+                    staleAt: Date.now() + (0.25 + 0.75 * Math.random()) * 1000 * 60 * 30, // 7.5-30 minutes 
+                    deletedAt: Date.now() + 1000 * 60 * 60 * 24 * 7, // one week
+                });
+    
+                Kitty.cache.set(key, storable);
+                try {
+                    localStorage.setItem(key, storable);
+                } catch (ex) {
+                    console.error(ex);
+                    console.error("clearing localStorage");
+                    localStorage.clear();
+                }
+                try {
+                    sessionStorage.setItem(key, storable);
+                } catch (ex) {
+                    console.error(ex);
+                    console.error("clearing sessionStorage");
+                    sessionStorage.clear();
+                }
+
+                return data;
+            })());
+
+            if (!data) {
+                data = await newData;
             }
         }
         
