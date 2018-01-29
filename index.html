@@ -424,15 +424,30 @@ export class CryptoKittyDex {
         })();
     }
 
-    async abridgedGeneome(kittyId) {
+    async abridgedGeneome(kittyId, targetKai = null) {
         const geneome = await this.geneome(kittyId);
+        let filtered = '';
+        for (let i = 0; i < geneome.length; i++) {
+            if (!targetKai || geneome[i] == targetKai[i]) {
+                filtered += geneome[i];
+            } else {
+                filtered += ' ';
+            }
+        }
+
         const pieces = [];
 
-        for (let i = 0; i < geneome.length; i++) {
+        for (let i = 0; i < geneome.length / 4; i++) {
             const genes = geneome.slice(i * 4, (i + 1) * 4);
+            const filteredGenes = filtered.slice(i * 4, (i + 1) * 4);
             const dominant = genes[3];
+            const filteredDominant = filteredGenes[3];
             const count = [...genes].filter(c => c == dominant).length;
-            pieces.push(dominant, '₁₂₃₄'[count - 1]);
+            if (filteredDominant != ' ') {
+                pieces.push(dominant, '₁₂₃₄'[count - 1]);
+            } else {
+                pieces.push(' ', ' ');
+            }
         }
 
         return pieces.join('');
@@ -637,10 +652,12 @@ const kittiesInputEl = form.querySelector('[name=kitties]');
 const targetKaiEl = form.querySelector('[name=target-kai]');
 const output = document.querySelector('#output');
 
+let targetKai = null;
+
 export const main = async () => {
     const params = new URLSearchParams(location.search);
     let kittiesInput = params.get('kitties') || '';
-    let targetKai = params.get('target-kai') || '';
+    targetKai = params.get('target-kai') || '';
 
     kittiesInputEl.value = kittiesInput;
     targetKaiEl.value = targetKai;
@@ -762,7 +779,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
             kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
-            el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id).then(s => {
+            el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id, targetKai).then(s => {
                 const i = Math.floor(s.length / 2);
                 return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
             })),
