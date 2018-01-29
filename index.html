@@ -664,7 +664,7 @@ export const main = async () => {
 
     const comments = /(^[^:]*:|#.+|\s*\([^\)]*\)\s*)/g
     kittiesInput = kittiesInput.replace(comments, '').trim();
-    targetKai = targetKai.replace(comments, '').trim();
+    targetKai = targetKai.replace(comments, '').replace(/\s+/g, '');
 
     if (kittiesInput) {
         let targetId = '';
