@@ -10,7 +10,7 @@
 
         <p>
             <label><span>Owner Address or<br />Root Kitty IDs:</span>
-            <input name="owner-address" placeholder="0x6a5c06692b34e9e5f7a... or 1234, 2567, 3846" value="0x6a5c06692b34e9e5f7af8bbc6463c4add1459f1c" /></label>
+            <input name="kitties" placeholder="0x6a5c06692b34e9e5f7a... or 1234, 2567, 3846" value="0x6a5c06692b34e9e5f7af8bbc6463c4add1459f1c" /></label>
         </p>
 
         <h2>What options?</h2>
@@ -18,8 +18,8 @@
         <p>
             <label><span>Target Kai Genome:</span> <input name="target-kai" placeholder="9bb9787747f4gbbg61115837fb9b2b72878j3346fgfdaccc" value="" /></label>
         </p>
-
-        <h2>The kitties!</h3>
+        
+        <br />
 
         <p>
             <label><span></span> <button type="submit">Show Me The Kitties!!</button></label>
@@ -27,6 +27,8 @@
 
         <br />
     </form>
+
+    <h2>The kitties!</h3>
 
     <div id="output"></div>
 </main>
@@ -65,7 +67,7 @@ label span {
 }
 
 input {
-    width: 64ex;
+    width: 92ex;
 }
 
 p, ol, ul, li {
@@ -476,11 +478,11 @@ export class CryptoKitties {
         return json;
     }
 
-    async *kittyIds(ownerAddress='', search='', offset=0, limit=Infinity) {
+    async *kittyIds(kittiesInput='', search='', offset=0, limit=Infinity) {
         const kitties = [];
         for (;;) {
             const page = await this.kitties_(
-                ownerAddress, offset + kitties.length, Math.min(100, limit - kitties.length), false, search);
+                kittiesInput, offset + kitties.length, Math.min(100, limit - kitties.length), false, search);
 
             for (const kitty of page.kitties) {
                 kitties.push(kitty);
@@ -504,8 +506,8 @@ export class CryptoKitties {
         }
     }
 
-    async kitties_(ownerAddress='', offset=0, limit=100, parents=false, search='') {
-        return this.json_(`kitties?owner_wallet_address=${ownerAddress}&offset=${offset}&limit=${limit}&parents=${parents}&search=${search}`);
+    async kitties_(kittiesInput='', offset=0, limit=100, parents=false, search='') {
+        return this.json_(`kitties?owner_wallet_address=${kittiesInput}&offset=${offset}&limit=${limit}&parents=${parents}&search=${search}`);
     }
 
     async kitty(kittyId) {
@@ -631,19 +633,23 @@ import {cryptokitties, Kitty} from '#cryptokitties';
 import {cryptokittydex} from '#cryptokittydex';
 
 const form = document.querySelector('form#family');
-const ownerAddressEl = form.querySelector('[name=owner-address]');
+const kittiesInputEl = form.querySelector('[name=kitties]');
 const targetKaiEl = form.querySelector('[name=target-kai]');
 const output = document.querySelector('#output');
 
 export const main = async () => {
     const params = new URLSearchParams(location.search);
-    const ownerAddress = params.get('owner-address') || '';
-    const targetKai = params.get('target-kai') || '';
+    let kittiesInput = params.get('kitties') || '';
+    let targetKai = params.get('target-kai') || '';
 
-    ownerAddressEl.value = ownerAddress;
+    kittiesInputEl.value = kittiesInput;
     targetKaiEl.value = targetKai;
 
-    if (ownerAddress) {
+    const comments = /(^[^:]*:|#.+|\/\*[^\*]*\*\/)/g
+    kittiesInput = kittiesInput.replace(comments, '').trim();
+    targetKai = targetKai.replace(comments, '').trim();
+
+    if (kittiesInput) {
         let targetId = '';
         if (location.hash > '#') {
             targetId = location.hash.slice(1);
@@ -653,47 +659,53 @@ export const main = async () => {
             }
         }
 
+        const kittyIds = [];
 
-        if (ownerAddress) {
-            const kittyIds = [];
+        if (/^0x[0-9A-Fa-f]+$/.test(kittiesInput)) {
+            // it's an address
             let r, p = new Promise(resolve => { r = resolve });
-            form.appendChild(el('p', p, ` kitties owned by `, el('code', ownerAddress), ':'));
+            form.appendChild(el('p', p, ` kitties owned by `, el('code', kittiesInput), ':'));
 
-            for await (const kittyId of cryptokitties.kittyIds(ownerAddress)) {
+            for await (const kittyId of cryptokitties.kittyIds(kittiesInput)) {
                 kittyIds.push(kittyId);
             }
             r(` ${kittyIds.length} `);
+        } else {
+            // assume it's a list of kitty IDs
+            kittyIds.push(...kittiesInput.split(/[^0-9\-\.\+]+/).filter(Boolean).map(Number));
+        }
 
-            let s, t = new Promise(resolve => { s = resolve });
-            form.appendChild(el('div', t))
-            const kitties = await Promise.all(kittyIds.map(id => Kitty.fetch(id)));
-            kitties.sort((a, b) => {
-                if (a.generation < b.generation)
-                    return -1;
-                else if (a.generation > b.generation)
-                    return +1;
-                else if (a.id < b.id)
-                    return -1;
-                else
-                    return +1;
-            });
-            s('');
+        if (kittyIds.length == 0) {
+            console.log("no kitties specifies, returning.");
+            return;
+        } else {
+            console.debug("kitty IDs:", kittyIds);
+        }
 
-            for (const kitty of kitties) {
-                if (kitty.owner_wallet_address != ownerAddress) {
-                    // it's on sale, which we count as not-owned. don't display.
-                    continue;
-                }
+        let s, t = new Promise(resolve => { s = resolve });
+        form.appendChild(el('div', t))
+        const kitties = await Promise.all(kittyIds.map(id => Kitty.fetch(id)));
+        kitties.sort((a, b) => {
+            if (a.generation < b.generation)
+                return -1;
+            else if (a.generation > b.generation)
+                return +1;
+            else if (a.id < b.id)
+                return -1;
+            else
+                return +1;
+        });
+        s('');
 
-                const tree = makeTree(kitty);
-                output.appendChild(el('', tree));
-                await tree;
+        for (const kitty of kitties) {
+            const tree = makeTree(kitty);
+            output.appendChild(el('', tree));
+            await tree;
 
-                if (document.getElementById(targetId)) {
-                    location.hash = '';
-                    location.hash = targetId;
-                    targetId = null;
-                }
+            if (document.getElementById(targetId)) {
+                location.hash = '';
+                location.hash = targetId;
+                targetId = null;
             }
         }
     }
