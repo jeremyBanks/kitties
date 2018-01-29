@@ -420,7 +420,7 @@ export class CryptoKittyDex {
             if (!lines) {
                 throw new Error("genes seemed to load, but are now missing!");
             }
-            return lines.map(s => s.padEnd(50)).join('\n');
+            return lines.map(s => s.padEnd(48)).join('\n');
         })();
     }
 
@@ -455,7 +455,7 @@ export class CryptoKittyDex {
 
     async geneome(kittyId) {
         const genes = await this.genes_;
-        const geneRecordLength = 50;
+        const geneRecordLength = 48;
         const recordSeparatorLength = 1;
         const stride = geneRecordLength + recordSeparatorLength;
         let result = genes.slice(stride * kittyId, stride * kittyId + geneRecordLength);
