@@ -420,7 +420,7 @@ export class CryptoKittyDex {
             if (!lines) {
                 throw new Error("genes seemed to load, but are now missing!");
             }
-            return lines.join('\n');
+            return lines.map(s => s.padEnd(50)).join('\n');
         })();
     }
 
