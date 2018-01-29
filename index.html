@@ -662,7 +662,7 @@ export const main = async () => {
     kittiesInputEl.value = kittiesInput;
     targetKaiEl.value = targetKai;
 
-    const comments = /(^[^:]*:|#.+|\/\*[^\*]*\*\/)/g
+    const comments = /(^[^:]*:|#.+|\s*\([^\)]*\)\s*)/g
     kittiesInput = kittiesInput.replace(comments, '').trim();
     targetKai = targetKai.replace(comments, '').trim();
 
