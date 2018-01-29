@@ -444,7 +444,7 @@ export class CryptoKittyDex {
             const filteredDominant = filteredGenes[3];
             const count = [...genes].filter(c => c == dominant).length;
             if (filteredDominant != ' ') {
-                pieces.push(dominant, '₁₂₃₄'[count - 1]);
+                pieces.push(dominant, '¹²³⁴'[count - 1]);
             } else {
                 pieces.push(' ', ' ');
             }
