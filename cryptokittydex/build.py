@@ -30,7 +30,7 @@ def main():
     with open(out_filename, mode='wt', encoding='utf-8') as f:
         f.write("window['/genes.js/byLine']=(s=>s.split(/\\n/g))(`\n")
 
-        for i in range(max_id + 1):
+        for i in range(1, max_id + 1):
             kitty = kitties.get(i, default_kitty)
             f.write(kitty['genes_kai'] + '\n')
 
