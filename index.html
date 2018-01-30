@@ -642,21 +642,24 @@ export class Kitty {
     }
 
     get autoName() {
-      const abr = (s, l=3) => {
-        const frequency = Array.from('etaoinsrhdlucmfywgpbvkxqjz');
-        while (s.length > l && frequency.length > 0) {
-          let c = frequency.shift();
-          while (s.length > l) {
-            let i = s.lastIndexOf(c);
-            if (i > 0) {
-              s = s.slice(0, i) + s.slice(i + 1);
-            } else break; 
-          }
+        const abr = (s, l=3, ff='') => {
+            const frequency = Array.from(ff + 'etaoinsrhdlucmfywgpbvkxqjz');
+            while (s.length > l && frequency.length > 0) {
+              let c = frequency.shift();
+              while (s.length > l) {
+                let i = s.lastIndexOf(c);
+                if (i > 0) {
+                  s = s.slice(0, i) + s.slice(i + 1);
+                  frequency.push(c); break;
+                } else break; 
+              }
+            }
+            return s.slice(0, l);
         }
-        return s.slice(0, l);
-      }
-      const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase()
-      return this.cattributes.map(x => `${abr(x.type, 32).toLowerCase()}${tc(abr(x.description, 5))}`).sort().join(' ').replace(/\b[a-z]+/g, '');
+        const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase();
+        const cattrs = this.cattributes.map(x => x.description);
+        const name = tc(abr(cattrs.join(''), 6)) + ': ' + abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 5)).join(' '), i.maxLength - 8, ' ').toLowerCase();
+        return name;
     }
 }
 
@@ -801,7 +804,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, (kitty.name || '').replace(/[^a-z0-9]+/gi, '').length > 4 ? kitty.name : kitty.autoName),
+            el('span', {class: 'name'}, (kitty.name || '').replace(/[^a-z0-9]+/gi, '').length > Infinity ? kitty.name : kitty.autoName),
             el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id, targetKai).then(s => {
                 const i = Math.floor(s.length / 2);
                 return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
