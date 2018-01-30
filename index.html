@@ -658,7 +658,8 @@ export class Kitty {
         }
         const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase();
         const cattrs = this.cattributes.map(x => x.description);
-        const name = tc(abr(cattrs.join(''), 6)) + ': ' + abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 5)).join(' '), i.maxLength - 8, ' ').toLowerCase();
+        const maxLength = 64;
+        const name = tc(abr(cattrs.join(''), 12)) + ': ' + abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 3)).join(' '), maxLength - 14, ' ').toLowerCase();
         return name;
     }
 }
