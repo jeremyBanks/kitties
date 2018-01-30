@@ -249,6 +249,10 @@ a.kitty > .name, a.kitty > .gene {
         0 -2px 3px var(--text-shadow-color),
         2px -2px 3px var(--text-shadow-color);
 }
+    
+a.kitty > .name {
+    font-size: 10px;
+}
 
 a.kitty > .info {
     bottom: 0;
@@ -651,7 +655,7 @@ export class Kitty {
         return s.slice(0, l);
       }
       const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase()
-      return this.cattributes.map(x => `${abr(x.type, 32).toLowerCase()}${tc(abr(x.description, 4))}`).sort().join(' ').replace(/\b[a-z]+/g, '');
+      return this.cattributes.map(x => `${abr(x.type, 32).toLowerCase()}${tc(abr(x.description, 5))}`).sort().join(' ').replace(/\b[a-z]+/g, '');
     }
 }
 
