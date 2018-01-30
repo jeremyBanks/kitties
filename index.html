@@ -643,13 +643,13 @@ export class Kitty {
 
     get autoName() {
         const abr = (s, l=3, ff='') => {
-            const frequency = Array.from(ff + 'etaoinsrhdlucmfywgpbvkxqjz');
+            const frequency = Array.from(ff + 'etaoinsrhdlucmfywgpbvkxqjz ');
             while (s.length > l && frequency.length > 0) {
               let c = frequency.shift();
               while (s.length > l) {
                 let i = s.lastIndexOf(c);
                 if (i > 0) {
-                  s = s.slice(0, i) + s.slice(i + 1);
+                  s = (s.slice(0, i) + s.slice(i + 1)).trim();
                   frequency.push(c); break;
                 } else break; 
               }
@@ -659,7 +659,7 @@ export class Kitty {
         const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase();
         const cattrs = this.cattributes.map(x => x.description);
         const maxLength = 64;
-        const name = tc(abr(cattrs.join(' '), 12)) + ': ' + abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 3)).join(' '), maxLength - 14, '                             ').toLowerCase();
+        const name = abr(cattrs.join(' '), 12).split(' ').map(tc).join(' ') + ': ' + abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 3)).join(' '), maxLength - 14, '                             ').toLowerCase();
         return name;
     }
 }
