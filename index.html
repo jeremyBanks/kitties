@@ -796,7 +796,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            el('span', {class: 'name'}, kitty.name.replace(/[^a-z]+/gi, '') ? kitty.name : kitty.autoName),
+            el('span', {class: 'name'}, (kitty.name || '').replace(/[^a-z0-9]+/gi, '').length > 4 ? kitty.name : kitty.autoName),
             el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id, targetKai).then(s => {
                 const i = Math.floor(s.length / 2);
                 return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
