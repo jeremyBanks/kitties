@@ -635,6 +635,24 @@ export class Kitty {
         ids.sort((a, b) => (a - b));
         return ids;
     }
+
+    get autoName() {
+      const abr = (s, l=3) => {
+        const frequency = Array.from('etaoinsrhdlucmfywgpbvkxqjz');
+        while (s.length > l && frequency.length > 0) {
+          let c = frequency.shift();
+          while (s.length > l) {
+            let i = s.lastIndexOf(c);
+            if (i > 0) {
+              s = s.slice(0, i) + s.slice(i + 1);
+            } else break; 
+          }
+        }
+        return s.slice(0, l);
+      }
+      const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase()
+      return this.cattributes.map(x => `${abr(x.type, 2)}${tc(abr(x.description, 3))}`).sort().join(' '));
+    }
 }
 
 Kitty.cache = new Map();
@@ -778,7 +796,7 @@ const makeTree = async (kitty, rootKitty = kitty) => {
                 }
             ),
             el('span', {class: 'info'}, `k${kitty.id} g${kitty.generation} c${kitty.children.length}`),
-            kitty.name ? el('span', {class: 'name'}, kitty.name) : '',
+            el('span', {class: 'name'}, kitty.name.replace(/[^a-z]+/gi, '') ? kitty.name : kitty.autoName),
             el('span', {class: 'gene', title: "genes"}, cryptokittydex.abridgedGeneome(kitty.id, targetKai).then(s => {
                 const i = Math.floor(s.length / 2);
                 return [[...s.slice(0, i)].map(f), el('br'), [...s.slice(i)].map(f)]
