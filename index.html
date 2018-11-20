@@ -658,7 +658,7 @@ export class Kitty {
             return s.slice(0, l);
         }
         const tc = s => s.slice(0, 1).toUpperCase() + s.slice(1).toLowerCase();
-        const cattrs = this.cattributes.map(x => x.description);
+        const cattrs = this.enhanced_cattributes.map(x => x.description);
         const name = abr(cattrs.join(' '), 12).split(' ').map(tc).join(' ') + ' ' + tc(abr(cattrs.map(s => s.slice(0, 1).toUpperCase() + s.slice(1)).map(s => abr(s, 3)).join(' ').toLowerCase(), 4, '                             '));
         return name;
     }
